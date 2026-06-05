@@ -1,3 +1,5 @@
+> **Not shipped in end-user releases** — development artifact for coding agents and operators. See [PUBLISH.md](PUBLISH.md).
+
 # Deye Inverter → Home Assistant Time-Series Pipeline — Implementation Plan
 
 **Audience:** a coding agent (Claude Code or similar) plus the human operator.

@@ -150,7 +150,9 @@ activemq-data/
 # Environments
 .env
 .envrc
+stack.env
 deye-bridge/config.env
+homeassistant/packages/solar.yaml
 mosquitto/config/passwd
 mosquitto/data/
 .venv
