@@ -1,0 +1,67 @@
+# Copy to <HA config>/packages/solar.yaml
+# Binds deye-bridge native MQTT topics; most entities are autodiscovered if a HA plugin is enabled.
+
+mqtt:
+  sensor:
+    - name: "Deye AC Power"
+      unique_id: deye_sun300g3_ac_active_power
+      state_topic: "solar/home/sun300g3/ac/active_power"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      icon: mdi:solar-power
+
+    - name: "Deye PV1 Power"
+      unique_id: deye_sun300g3_dc_pv1_power
+      state_topic: "solar/home/sun300g3/dc/pv1/power"
+      unit_of_measurement: "W"
+      device_class: power
+      state_class: measurement
+      icon: mdi:solar-power-variant
+
+    - name: "Deye Today Energy"
+      unique_id: deye_sun300g3_day_energy
+      state_topic: "solar/home/sun300g3/day_energy"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total
+      icon: mdi:solar-power
+
+    - name: "Deye Total Energy"
+      unique_id: deye_sun300g3_total_energy
+      state_topic: "solar/home/sun300g3/total_energy"
+      unit_of_measurement: "kWh"
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:sigma
+
+    - name: "Deye Grid Voltage"
+      unique_id: deye_sun300g3_ac_l1_voltage
+      state_topic: "solar/home/sun300g3/ac/l1/voltage"
+      unit_of_measurement: "V"
+      device_class: voltage
+      state_class: measurement
+      icon: mdi:flash
+
+    - name: "Deye Inverter Temperature"
+      unique_id: deye_sun300g3_radiator_temp
+      state_topic: "solar/home/sun300g3/radiator_temp"
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement
+      icon: mdi:thermometer
+
+  binary_sensor:
+    - name: "Deye Bridge Online"
+      unique_id: deye_sun300g3_bridge_status
+      state_topic: "solar/home/sun300g3/status"
+      payload_on: "online"
+      payload_off: "offline"
+      device_class: connectivity
+
+    - name: "Deye Logger Online"
+      unique_id: deye_sun300g3_logger_status
+      state_topic: "solar/home/sun300g3/logger_status"
+      payload_on: "online"
+      payload_off: "offline"
+      device_class: connectivity

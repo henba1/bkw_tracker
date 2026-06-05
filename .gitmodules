@@ -1,0 +1,3 @@
+[submodule "pysolarmanv5"]
+	path = pysolarmanv5
+	url = https://github.com/jmccrohan/pysolarmanv5.git
