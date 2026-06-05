@@ -1,6 +1,6 @@
-services:
-  deye-bridge:
-    image: ghcr.io/kbialek/deye-inverter-mqtt:latest
-    container_name: deye-bridge
-    restart: unless-stopped
-    env_file: ./config.env
+# publish:exclude — legacy stub; not shipped. Use root compose.yml via ./setup.sh. See PUBLISH.md.
+# Legacy per-service compose. Prefer the root stack:
+#   ./scripts/stack.sh up deye-bridge
+#
+# Or manually:
+#   docker compose --env-file ../stack.env -f ../compose.yml up -d deye-bridge

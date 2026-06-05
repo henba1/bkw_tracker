@@ -1,7 +1,9 @@
+> **Not shipped in end-user releases** — integrator / multi-vendor contract doc. See [PUBLISH.md](../PUBLISH.md).
+
 # Canonical MQTT topic schema
 
 Version: 1.0  
-Prefix: `solar/<site>/<inverter_id>` → configured as `solar/home/sun300g3`
+Prefix: `solar/<SITE_ID>/<INVERTER_ID>` — derived from `stack.env` (`SITE_ID`, `INVERTER_ID`) unless `MQTT_TOPIC_PREFIX` is set explicitly.
 
 This is the **stable contract** between acquisition and all downstream consumers (HA, Grafana, watchdog). Inverter-specific knowledge lives only in `deye-bridge/config.env`.
 
@@ -26,8 +28,8 @@ deye-inverter-mqtt also publishes:
 
 | Topic | Values | Meaning |
 |---|---|---|
-| `solar/home/sun300g3/status` | online/offline | Bridge ↔ broker connectivity (LWT) |
-| `solar/home/sun300g3/logger_status` | online/offline | Bridge ↔ logger connectivity |
+| `<MQTT_TOPIC_PREFIX>/status` | online/offline | Bridge ↔ broker connectivity (LWT) |
+| `<MQTT_TOPIC_PREFIX>/logger_status` | online/offline | Bridge ↔ logger connectivity |
 
 ## HA entity mapping
 
@@ -41,6 +43,6 @@ deye-inverter-mqtt also publishes:
 
 ## Remap layer
 
-`deye-inverter-mqtt` publishes native suffix names under `MQTT_TOPIC_PREFIX`. A strict canonical remap (Section 6.4 of PLAN.md) is **not required** while only Deye hardware is used — HA sensors in `homeassistant/packages/solar.yaml` bind directly to native topics.
+`deye-inverter-mqtt` publishes native suffix names under `MQTT_TOPIC_PREFIX` from `stack.env`. HA sensors are rendered into `homeassistant/packages/solar.yaml` from `config/templates/solar.yaml.tpl`.
 
 Introduce a remap container only when adding a non-Deye adapter that uses different topic names.

@@ -1,11 +1,6 @@
-services:
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: mosquitto
-    restart: unless-stopped
-    ports:
-      - "1883:1883"
-    volumes:
-      - ./config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - ./config/passwd:/mosquitto/config/passwd:ro
-      - ./data:/mosquitto/data
+# publish:exclude — legacy stub; not shipped. Use root compose.yml via ./setup.sh. See PUBLISH.md.
+# Legacy per-service compose. Prefer the root stack:
+#   ./scripts/stack.sh up mosquitto
+#
+# Or manually:
+#   docker compose --env-file ../stack.env -f ../compose.yml up -d mosquitto

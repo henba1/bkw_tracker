@@ -2,16 +2,26 @@
 """Phase-0 smoke test: single SolarmanV5 Modbus read from the logger."""
 
 import argparse
+import os
 import sys
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Smoke-test a single Modbus read via SolarmanV5")
-    parser.add_argument("--ip", default="192.168.178.100", help="Logger IP on the LAN")
-    parser.add_argument("--serial", type=int, default=4145330384, help="Logger serial (not inverter QR)")
-    parser.add_argument("--port", type=int, default=8899)
+    parser.add_argument("--ip", default=os.environ.get("LOGGER_IP"), help="Logger IP (or set LOGGER_IP)")
+    parser.add_argument(
+        "--serial",
+        type=int,
+        default=int(os.environ["LOGGER_SERIAL"]) if os.environ.get("LOGGER_SERIAL") else None,
+        help="Logger serial (or set LOGGER_SERIAL)",
+    )
+    parser.add_argument("--port", type=int, default=int(os.environ.get("LOGGER_PORT", "8899")))
     parser.add_argument("--register", type=lambda x: int(x, 0), default=0x3C, help="Holding register (0x3C = day energy)")
     args = parser.parse_args()
+
+    if not args.ip or args.serial is None:
+        print("Provide --ip/--serial or run via: ./scripts/stack.sh smoke", file=sys.stderr)
+        return 1
 
     try:
         from pysolarmanv5 import PySolarmanV5

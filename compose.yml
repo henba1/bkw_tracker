@@ -1,0 +1,20 @@
+# Root stack compose. Always run via scripts/stack.sh.
+name: bkw_tracker
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "${MQTT_PORT}:1883"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/config/passwd:/mosquitto/config/passwd:ro
+      - ./mosquitto/data:/mosquitto/data
+
+  deye-bridge:
+    image: ghcr.io/kbialek/deye-inverter-mqtt:latest
+    container_name: deye-bridge
+    restart: unless-stopped
+    env_file: ./deye-bridge/config.env

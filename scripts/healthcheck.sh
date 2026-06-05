@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-# Watchdog: restart deye-bridge if no MQTT traffic on solar/# for too long during daylight.
+# Watchdog: restart deye-bridge if no MQTT traffic for too long during daylight.
 # Install via cron: */5 * * * * /path/to/bkw_tracker/scripts/healthcheck.sh
-
 set -euo pipefail
 
-MQTT_HOST="${MQTT_HOST:-192.168.178.52}"
-MQTT_USER="${MQTT_USER:-solar}"
-MQTT_PASSWORD="${MQTT_PASSWORD:?Set MQTT_PASSWORD}"
-TOPIC="${MQTT_TOPIC:-solar/#}"
-STALE_SECONDS="${STALE_SECONDS:-600}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/stack.sh
+source "${SCRIPT_DIR}/lib/stack.sh"
+
+require_mqtt_env
+
+TOPIC="${MQTT_TOPIC_PREFIX}/#"
+STALE_SECONDS="${HEALTHCHECK_STALE_SECONDS:-600}"
 BROKER_TIMEOUT="${BROKER_TIMEOUT:-15}"
 CONTAINER="${CONTAINER:-deye-bridge}"
-LATITUDE="${LATITUDE:-52.0}"
-LONGITUDE="${LONGITUDE:-13.0}"
+LATITUDE="${HEALTHCHECK_LATITUDE:-52.0}"
+LONGITUDE="${HEALTHCHECK_LONGITUDE:-13.0}"
 
 if command -v sunwait &>/dev/null; then
     if ! sunwait wait rise "$LATITUDE" "$LONGITUDE"; then
@@ -20,8 +22,8 @@ if command -v sunwait &>/dev/null; then
     fi
 fi
 
-payload="$(timeout "$BROKER_TIMEOUT" mosquitto_sub \
-    -h "$MQTT_HOST" -u "$MQTT_USER" -P "$MQTT_PASSWORD" \
+payload="$(timeout "$BROKER_TIMEOUT" mosquitto_sub_cmd \
+    -u "$MQTT_USER" -P "$MQTT_PASSWORD" \
     -t "$TOPIC" -C 1 -W "$STALE_SECONDS" 2>/dev/null || true)"
 
 if [[ -z "$payload" ]]; then
