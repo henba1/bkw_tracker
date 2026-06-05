@@ -150,6 +150,9 @@ activemq-data/
 # Environments
 .env
 .envrc
+deye-bridge/config.env
+mosquitto/config/passwd
+mosquitto/data/
 .venv
 env/
 venv/

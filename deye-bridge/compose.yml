@@ -1,0 +1,6 @@
+services:
+  deye-bridge:
+    image: ghcr.io/kbialek/deye-inverter-mqtt:latest
+    container_name: deye-bridge
+    restart: unless-stopped
+    env_file: ./config.env
