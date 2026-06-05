@@ -21,7 +21,6 @@ nc -zv "$LOGGER_IP" "$LOGGER_PORT"
 
 - [ ] Ping or HTTP succeeds.
 - [ ] Port 8899 is open.
-- check 
 
 ## 3. Discovery (optional — serial confirmation)
 
