@@ -1,86 +1,51 @@
-# Publishing guide — what ships to end users
+# Publishing guide
 
-> **Maintainer doc** — not included in end-user release tarballs (see `.publishignore`).
+> **Maintainer doc** — excluded from end-user tarballs (`.publishignore`).
 
-This repo contains **development artifacts** alongside the user-facing app. When packaging for non-technical users, exclude flagged paths. Nothing listed here should be deleted from the dev repo.
+## Recommended: GitHub repo + release tarball
 
-## End-user release (ship)
+**Use a public GitHub repository as the primary publication** (`henba1/bkw_tracker`), not a standalone tarball.
 
-Minimum files a homeowner needs to run `./setup.sh`:
-
-| Path | Purpose |
+| Approach | Role |
 |---|---|
-| `README.md` | Setup instructions |
-| `setup.sh` | One-command wizard |
-| `stack.env.example` | Config template |
-| `compose.yml` | Stack definition |
-| `config/templates/` | Rendered service configs |
-| `mosquitto/config/mosquitto.conf` | Broker config |
-| `scripts/setup.sh`, `scripts/stack.sh` | Runtime tooling |
-| `scripts/lib/` | Config loader / renderer |
-| `scripts/healthcheck.sh` | Optional watchdog |
-| `homeassistant/packages/.gitkeep` | Output dir for generated HA package |
+| **GitHub repo** | Source of truth, issues, `git pull` updates, discoverability |
+| **GitHub Release + `.tar.gz`** | Optional download for users who do not use git |
+| **Tarball only** | Not recommended — no version history, no issues, no easy updates |
 
-**Optional but useful in releases:**
+Workflow:
 
-| Path | Purpose |
-|---|---|
-| `docs/INVERTER_NOTES.md` | Hardware-specific troubleshooting |
-| `scripts/smoke_read.py` | Manual inverter test (needs `pysolarmanv5`) |
+1. Tag a release: `git tag v1.0.0 && git push origin v1.0.0`
+2. Build artifact: `./scripts/release.sh v1.0.0`
+3. Attach `dist/bkw_tracker-v1.0.0.tar.gz` to the GitHub Release
+4. Point users to the README quick start
+
+## GitHub Pages
+
+README is published at **https://henba1.github.io/bkw_tracker/** via `.github/workflows/pages.yml` (builds from `README.md` + `assets/` on each push to `main`).
+
+One-time repo setting: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+
+## End-user release contents
+
+Everything needed for `./setup.sh`, excluding paths in `.publishignore`:
+
+- `README.md`, `assets/`, `setup.sh`, `compose.yml`, `stack.env.example`
+- `config/templates/`, `mosquitto/config/`, `scripts/`
+- `homeassistant/lovelace/`, `homeassistant/packages/.gitkeep`
+
+Key scripts not obvious from layout: `install_ha_package.sh`, `configure_ha_mqtt.py`, `install_healthcheck_cron.sh`.
 
 ## Internal — do not ship
 
-| Path | Why |
-|---|---|
-| `PLAN.md` | Implementation plan for coding agents / operators |
-| `docs/MORNING_CHECKLIST.md` | Developer bring-up checklist |
-| `PUBLISH.md` | This file |
-| `.publishignore` | Packaging manifest |
-| `scripts/setup_mqtt_password.sh` | Deprecated; superseded by `setup.sh` |
-| `mosquitto/compose.yml` | Legacy stub → use root `compose.yml` |
-| `deye-bridge/compose.yml` | Legacy stub → use root `compose.yml` |
-| `docs/SCHEMA.md` | MQTT contract for integrators / future multi-vendor work |
+`PLAN.md`, `PUBLISH.md`, `.publishignore`, `docs/*` (all dev/operator notes), legacy per-service `compose.yml` stubs, `pysolarmanv5/` submodule.
 
-## Never ship (generated or secret)
+## Never ship
 
-| Path | Why |
-|---|---|
-| `stack.env` | Local secrets |
-| `mosquitto/config/passwd` | MQTT credentials |
-| `mosquitto/data/` | Broker persistence |
-| `deye-bridge/config.env` | Rendered secrets |
-| `homeassistant/packages/solar.yaml` | Rendered per-site |
-| `.git/`, `.gitmodules` | VCS metadata |
+`stack.env`, `mosquitto/config/passwd`, `mosquitto/data/`, `deye-bridge/config.env`, rendered `homeassistant/packages/solar.yaml`, `.git/`.
 
-## Optional diagnostic bundle (exclude from minimal release)
-
-| Path | Why |
-|---|---|
-| `pysolarmanv5/` | Git submodule for `stack.sh smoke` and network discovery; large. End users can use `./setup.sh --add-inverter` instead. Include only in **developer** or **full** distro. |
-
-## Create a release tarball
+## Build tarball
 
 ```bash
-tar -czvf bkw_tracker-release.tar.gz \
-  --exclude-from=.publishignore \
-  -C "$(dirname "$PWD")" "$(basename "$PWD")"
+./scripts/release.sh          # → dist/bkw_tracker-<git-describe>.tar.gz
+./scripts/release.sh v1.0.0   # → dist/bkw_tracker-v1.0.0.tar.gz
 ```
-
-Or from repo root:
-
-```bash
-git archive --format=tar.gz --prefix=bkw_tracker/ HEAD \
-  $(git ls-files | grep -v -F -f .publishignore)
-```
-
-(`git archive` only includes tracked files; prefer the `tar` command above for working-tree releases that respect `.publishignore`.)
-
-## Flagging convention
-
-Internal-only markdown files carry this banner at the top:
-
-```markdown
-> **Not shipped in end-user releases** — see [PUBLISH.md](…).
-```
-
-Search the repo: `Not shipped in end-user releases`

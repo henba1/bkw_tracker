@@ -1,4 +1,16 @@
+<div align="center">
+
+[![Documentation](https://img.shields.io/badge/📖_Documentation-GitHub_Pages-0969da?style=for-the-badge)](https://henba1.github.io/bkw_tracker/)
+
+</div>
+
 # Deye solar inverter monitoring
+
+<p align="center">
+  <a href="https://henba1.github.io/bkw_tracker/">
+    <img src="assets/image.png" alt="Home Assistant Solar dashboard — AC power over 7 days" width="720">
+  </a>
+</p>
 
 Reads power and energy from a **Deye micro-inverter** (tested on SUN300G3) and publishes to **MQTT** for **Home Assistant**.
 
