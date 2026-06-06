@@ -4,9 +4,25 @@
 import argparse
 import os
 import sys
+from pathlib import Path
+
+
+def load_stack_env() -> None:
+    """Load stack.env into os.environ when not already set."""
+    root = Path(__file__).resolve().parent.parent
+    env_file = root / "stack.env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key, value)
 
 
 def main() -> int:
+    load_stack_env()
     parser = argparse.ArgumentParser(description="Smoke-test a single Modbus read via SolarmanV5")
     parser.add_argument("--ip", default=os.environ.get("LOGGER_IP"), help="Logger IP (or set LOGGER_IP)")
     parser.add_argument(

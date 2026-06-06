@@ -1,0 +1,58 @@
+# Phase 4 dashboard — entity IDs include device name prefix from HA MQTT grouping
+
+title: Solar
+views:
+  - title: Production
+    path: production
+    icon: mdi:solar-power
+    cards:
+      - type: gauge
+        entity: sensor.deye_sun300g3_eu_230_solar_ac_power
+        name: AC Output
+        min: 0
+        max: 300
+        severity:
+          green: 50
+          yellow: 10
+          red: 0
+
+      - type: entities
+        title: Live
+        entities:
+          - entity: sensor.deye_sun300g3_eu_230_solar_pv_power
+            name: PV Power
+          - entity: sensor.deye_sun300g3_eu_230_solar_grid_voltage
+            name: Grid Voltage
+          - entity: sensor.deye_sun300g3_eu_230_solar_grid_frequency
+            name: Grid Frequency
+          - entity: sensor.deye_sun300g3_eu_230_solar_inverter_temperature
+            name: Temperature
+          - entity: binary_sensor.deye_sun300g3_eu_230_solar_logger_online
+            name: Logger
+          - entity: binary_sensor.deye_sun300g3_eu_230_solar_mqtt_bridge_online
+            name: MQTT Bridge
+
+      - type: entities
+        title: Energy
+        entities:
+          - entity: sensor.deye_sun300g3_eu_230_solar_today_energy
+            name: Today
+          - entity: sensor.deye_sun300g3_eu_230_solar_total_energy
+            name: Lifetime
+
+      - type: statistics-graph
+        title: AC Power (7 days)
+        entities:
+          - sensor.deye_sun300g3_eu_230_solar_ac_power
+        days_to_show: 7
+        stat_types:
+          - mean
+          - max
+
+      - type: statistics-graph
+        title: Today Energy (30 days)
+        entities:
+          - sensor.deye_sun300g3_eu_230_solar_today_energy
+        days_to_show: 30
+        stat_types:
+          - change

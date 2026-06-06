@@ -5,8 +5,11 @@
 PLAN.md
 PUBLISH.md
 .publishignore
-docs/MORNING_CHECKLIST.md
-docs/SCHEMA.md
+docs/
+
+# --- build artifacts ---
+dist/
+.venv/
 
 # --- deprecated / legacy ---
 scripts/setup_mqtt_password.sh

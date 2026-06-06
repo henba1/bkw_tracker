@@ -1,142 +1,126 @@
 # Deye solar inverter monitoring
 
-This software reads power and energy data from a **Deye micro-inverter** (e.g. SUN300G3) and makes it available for **Home Assistant** and other apps via MQTT.
+Reads power and energy from a **Deye micro-inverter** (tested on SUN300G3) and publishes to **MQTT** for **Home Assistant**.
 
-You run it on a small always-on computer on your home network (for example a Raspberry Pi).
+Runs on a small always-on Linux host with Docker (e.g. Raspberry Pi).
 
 ---
 
-## Before you start
+## Prerequisites
 
-You will need:
-
-| Item | Notes |
+| Requirement | Details |
 |---|---|
-| A Raspberry Pi or similar | On the same Wi-Fi as the inverter, with Docker installed |
-| Your inverter on the home Wi-Fi | Configured in the inverter’s settings (not only its own hotspot) |
-| The inverter’s **network address** | From your router’s “connected devices” list (e.g. `192.178.152.42`) |
-| Daylight (for first inverter test) | The inverter’s Wi-Fi module is powered by the solar panel |
+| **Host** | Linux with Docker and Docker Compose v2 |
+| **Python** (optional) | 3.11+ with [uv](https://docs.astral.sh/uv/) — for discovery/smoke tools only |
+| **Network** | Host on the same LAN as the inverter |
+| **Inverter** | Joined to your home Wi-Fi (not only its AP hotspot) |
+| **Daylight** | First inverter test needs sun — the built-in Wi-Fi module is solar-powered |
+| **Home Assistant** | Optional but this repo targets it — see below |
 
+### Home Assistant
+
+Works with an **existing Home Assistant Docker container** (recommended on the same Pi):
+
+- Container name defaults to `homeassistant` (`HA_CONTAINER` in `stack.env`)
+- Config path is auto-detected from the container’s `/config` mount
+- If HA uses **host networking** on the same machine as Mosquitto → broker is `127.0.0.1:1883` (default)
+- If HA runs elsewhere → set `HA_CONFIG` to its config directory and `MQTT_BROKER_HOST` to this Pi’s LAN IP
+
+This project runs **Mosquitto + deye-bridge** only — it does not install Home Assistant.
+
+### Inverter (SUN300G3 defaults)
+
+`stack.env.example` ships working defaults for SUN300G3 (`LOGGER_PROTOCOL=at`, `LOGGER_PORT=48899`). You still need:
+
+- **Logger IP** — from your router’s device list (reserve a static DHCP lease)
+- **Logger serial** — 10-digit sticker on the unit (often `41…`)
 
 ---
 
-## Setup (recommended — about 2 minutes)
-
-Open a terminal in this folder and run:
+## Quick start
 
 ```bash
 ./setup.sh
 ```
 
-The wizard will ask you:
+The wizard asks for an MQTT password, inverter IP (skippable), and logger serial. It writes `stack.env`, starts Mosquitto, and optionally starts data collection.
 
-### 1. MQTT password
+Note the printed **host IP**, **MQTT port** (`1883`), **username** (`solar`), and **password** — needed if you configure HA manually.
 
-Choose a password (at least 8 characters). You will enter the same password later in Home Assistant.
-
-This is **not** your Wi-Fi password — it only protects access to the solar data on your network.
-
-### 2. Inverter IP address
-
-The inverter’s address on your home network.
-
-- **Inverter is on and producing?** Enter the IP from your router.
-- **Inverter is off (night / no sun)?** Press Enter to skip — you can add it tomorrow.
-
-### 3. Logger serial number
-
-Printed on a **small sticker** on the inverter (10 digits, often starting with `41…`).
-
-Press **Enter** to accept the default if it matches your sticker.
-
-### What the wizard does automatically
-
-- Saves your answers to `stack.env`
-- Detects this computer’s network address (no need to type the Pi’s IP)
-- Starts the MQTT message broker
-- Optionally connects to the inverter (if you provided an IP and it responds)
-
-When setup finishes, note the screen that shows:
-
+```bash
+./scripts/stack.sh up          # start broker + bridge
+./scripts/stack.sh verify-metrics   # one MQTT reading (needs daylight + logger online)
 ```
-This computer's address: 192.168.x.x
-MQTT port: 1883
-MQTT username: solar
-MQTT password: (the one you just chose)
-```
-
-You need these four values for Home Assistant.
 
 ---
 
-## Connect Home Assistant
+## Home Assistant
 
-1. In Home Assistant: **Settings → Devices & services → Add integration → MQTT**
-2. Enter:
-   - **Broker:** this Pi’s address from setup (e.g. `192.178.152.41`) — not the inverter IP
-   - **Port:** `1883`
-   - **Username:** `solar`
-   - **Password:** the password you chose in `./setup.sh`
-3. After the inverter is running, copy the generated sensor file:
-   ```bash
-   cp homeassistant/packages/solar.yaml <your-ha-config>/packages/
-   ```
-   Then reload MQTT in Home Assistant (or restart HA).
+One command installs sensors, Lovelace dashboard, and MQTT broker config (HA 2024+ requires broker via config entry, not YAML):
 
-You should see sensors for AC power, today’s energy, total energy, voltage, and temperature.
+```bash
+./scripts/install_ha_package.sh --restart
+```
+
+Then in HA: **Settings → Dashboards → Energy** → add solar production:
+
+`sensor.deye_sun300g3_eu_230_solar_total_energy`
+
+A **Solar** sidebar dashboard is added automatically. Entity names include the device prefix `deye_sun300g3_eu_230_…` — sensors show `unavailable` when the logger is offline (expected at night).
+
+**Overrides** in `stack.env`: `HA_CONTAINER`, `HA_CONFIG`, `MQTT_BROKER_HOST`.
 
 ---
 
-## Add the inverter later (skipped IP during setup)
-
-When the panel is producing and the inverter is on the network:
+## Add inverter later
 
 ```bash
 ./setup.sh --add-inverter
 ```
 
-Enter the inverter IP when asked. The script checks the connection and starts data collection.
-
 ---
 
-## Daily use — useful commands
+## Commands
 
-| What you want | Command |
+| Task | Command |
 |---|---|
-| Check if services are running | `./scripts/stack.sh ps` |
-| View live MQTT messages | `./scripts/stack.sh verify-broker` (Ctrl-C to stop) |
-| Stop everything | `./scripts/stack.sh down` |
-| Start everything | `./scripts/stack.sh up` |
-| Test inverter connection | `./scripts/stack.sh smoke` |
+| Start stack | `./scripts/stack.sh up` |
+| Stop stack | `./scripts/stack.sh down` |
+| Service status | `./scripts/stack.sh ps` |
+| Live MQTT traffic | `./scripts/stack.sh verify-broker` |
+| Check metrics | `./scripts/stack.sh verify-metrics` |
+| Install / update HA | `./scripts/install_ha_package.sh --restart` |
+| Watchdog cron (optional) | `./scripts/install_healthcheck_cron.sh` |
+
+Manual config: copy `stack.env.example` → `stack.env`, then `./scripts/stack.sh init`.
+
+### Python tools (optional)
+
+Discovery and smoke-test scripts use the `pysolarmanv5` submodule:
+
+```bash
+uv sync          # creates .venv, installs deps from pyproject.toml
+uv run scripts/smoke_read.py --help
+uv run solarman-uni-scan eth0
+```
+
+The Docker stack does not need Python — only these diagnostic commands do.
 
 ---
 
 ## Troubleshooting
 
-### “Could not reach the inverter”
+**Inverter unreachable** — wait for daylight; confirm IP in router; run `./setup.sh --add-inverter`.
 
-- Wait until **daylight** — the inverter Wi-Fi needs solar power.
-- Confirm the IP in your router’s device list.
-- Run `./setup.sh --add-inverter` again with the correct IP.
+**HA shows no data** — run `./scripts/stack.sh up`; re-run `./scripts/install_ha_package.sh --restart`; check logger is online (`docker logs deye-bridge --tail 20`).
 
-### Setup worked but Home Assistant shows no data
+**Wrong serial** — edit `LOGGER_SERIAL` in `stack.env`, then `./scripts/stack.sh render && ./scripts/stack.sh up`. If reads still fail, try `LOGGER_SERIAL_FALLBACK`.
 
-- Inverter bridge not started yet → run `./scripts/stack.sh up`
-- Wrong MQTT password in HA → must match `./setup.sh`
-- HA package not installed → copy `homeassistant/packages/solar.yaml` into HA `packages/`
+**Reads time out** — uncomment `DEYE_LOGGER_MAX_REG_RANGE_LENGTH=16` in `stack.env`.
 
-### Wrong logger serial
+**Different Deye model** — edit logger keys in `stack.env` (`LOGGER_PROTOCOL`, `LOGGER_PORT`, `HA_INVERTER_MODEL`), render, restart.
 
-Edit `stack.env`, change `LOGGER_SERIAL=`, then:
-
-```bash
-./scripts/stack.sh render
-./scripts/stack.sh up
-```
-
-If reads still fail, try `LOGGER_SERIAL_FALLBACK` value from [docs/INVERTER_NOTES.md](docs/INVERTER_NOTES.md).
-
-### Start over from scratch
+**Start over**
 
 ```bash
 ./scripts/stack.sh down
@@ -144,19 +128,3 @@ rm -f stack.env deye-bridge/config.env mosquitto/config/passwd
 sudo rm -rf mosquitto/data
 ./setup.sh
 ```
-
----
-
-## For advanced users
-
-| Topic | Location |
-|---|---|
-| What to include in a release tarball | [PUBLISH.md](PUBLISH.md) |
-| Full implementation plan *(dev only)* | [PLAN.md](PLAN.md) |
-| MQTT topic schema | [docs/SCHEMA.md](docs/SCHEMA.md) |
-| Inverter / protocol notes | [docs/INVERTER_NOTES.md](docs/INVERTER_NOTES.md) |
-| Morning hardware checklist | [docs/MORNING_CHECKLIST.md](docs/MORNING_CHECKLIST.md) |
-| Manual config (no wizard) | Copy `stack.env.example` → `stack.env`, use `./scripts/stack.sh` |
-| All env variables | [stack.env.example](stack.env.example) |
-
-Swapping to a different Deye inverter later: edit logger settings in `stack.env`, run `./scripts/stack.sh render && ./scripts/stack.sh up`.
