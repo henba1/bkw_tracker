@@ -147,6 +147,11 @@ activemq-data/
 # SageMath parsed files
 *.sage.py
 
+# Maintainer-only (kept locally, not on remote)
+PLAN.md
+PUBLISH.md
+docs/
+
 # Environments
 .env
 .envrc
