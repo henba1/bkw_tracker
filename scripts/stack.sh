@@ -19,6 +19,7 @@ Commands:
   ps              docker compose ps
   logs [service]  docker compose logs -f [service]
   verify-broker   Test MQTT broker connectivity (Ctrl-C to exit)
+  verify-metrics  Wait for one ac/active_power message (Phase 2 accept)
   smoke           Run SolarmanV5 smoke read using stack.env logger settings
 
 Configure everything in stack.env (copy from stack.env.example).
@@ -99,12 +100,35 @@ cmd_verify_broker() {
     fi
 }
 
+cmd_verify_metrics() {
+    require_mqtt_env
+    local topic="${MQTT_TOPIC_PREFIX}/ac/active_power"
+    local wait_seconds="${VERIFY_METRICS_TIMEOUT:-60}"
+    echo "Waiting for MQTT on ${topic} (timeout ${wait_seconds}s)..."
+    local payload
+    payload="$(timeout "$wait_seconds" mosquitto_sub_cmd \
+        -u "$MQTT_USER" -P "$MQTT_PASSWORD" \
+        -t "$topic" -C 1 -W "$wait_seconds" 2>/dev/null || true)"
+    if [[ -z "$payload" ]]; then
+        echo "FAIL: no message on ${topic} — is deye-bridge running and logger online?" >&2
+        return 1
+    fi
+    echo "OK: ${topic} = ${payload}"
+}
+
 cmd_smoke() {
     require_logger_env
-    python3 "${STACK_ROOT}/scripts/smoke_read.py" \
-        --ip "$LOGGER_IP" \
-        --serial "$LOGGER_SERIAL" \
+    local -a smoke_args=(
+        "${STACK_ROOT}/scripts/smoke_read.py"
+        --ip "$LOGGER_IP"
+        --serial "$LOGGER_SERIAL"
         --port "$LOGGER_PORT"
+    )
+    if command -v uv &>/dev/null && [[ -f "${STACK_ROOT}/pyproject.toml" ]]; then
+        uv run --project "${STACK_ROOT}" "${smoke_args[@]}"
+    else
+        python3 "${smoke_args[@]}"
+    fi
 }
 
 main() {
@@ -119,6 +143,7 @@ main() {
         ps) cmd_ps "$@" ;;
         logs) cmd_logs "$@" ;;
         verify-broker) cmd_verify_broker "$@" ;;
+        verify-metrics) cmd_verify_metrics "$@" ;;
         smoke) cmd_smoke "$@" ;;
         -h | --help | help | "") usage ;;
         *)
