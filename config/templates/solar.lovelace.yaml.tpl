@@ -9,14 +9,14 @@ views:
       - type: statistics-graph
         title: AC Power (7 days)
         entities:
-          - sensor.deye_sun300g3_eu_230_solar_ac_power
+          - sensor.${HA_ENTITY_SLUG}_solar_ac_power
         days_to_show: 7
         stat_types:
           - mean
           - max
 
       - type: gauge
-        entity: sensor.deye_sun300g3_eu_230_solar_ac_power
+        entity: sensor.${HA_ENTITY_SLUG}_solar_ac_power
         name: AC Output
         min: 0
         max: 300
@@ -28,17 +28,17 @@ views:
       - type: entities
         title: Live
         entities:
-          - entity: sensor.deye_sun300g3_eu_230_solar_pv_power
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_pv_power
             name: PV Power
-          - entity: sensor.deye_sun300g3_eu_230_solar_grid_voltage
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_grid_voltage
             name: Grid Voltage
-          - entity: sensor.deye_sun300g3_eu_230_solar_grid_frequency
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_grid_frequency
             name: Grid Frequency
-          - entity: sensor.deye_sun300g3_eu_230_solar_inverter_temperature
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_inverter_temperature
             name: Temperature
-          - entity: binary_sensor.deye_sun300g3_eu_230_solar_logger_online
+          - entity: binary_sensor.${HA_ENTITY_SLUG}_solar_logger_online
             name: Device
-          - entity: binary_sensor.deye_sun300g3_eu_230_solar_mqtt_bridge_online
+          - entity: binary_sensor.${HA_ENTITY_SLUG}_solar_mqtt_bridge_online
             name: MQTT Bridge
 
       - type: entities
@@ -46,7 +46,7 @@ views:
         entities:
           - entity: sensor.solar_today_energy_computed
             name: Today (computed)
-          - entity: sensor.deye_sun300g3_eu_230_solar_total_energy
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_total_energy
             name: Lifetime
 
       - type: history-graph
@@ -54,13 +54,13 @@ views:
         hours_to_show: 48
         refresh_interval: 60
         entities:
-          - entity: sensor.deye_sun300g3_eu_230_solar_ac_power
+          - entity: sensor.${HA_ENTITY_SLUG}_solar_ac_power
             name: AC Power (W)
 
       - type: statistics-graph
         title: Daily AC Energy (30 days)
         entities:
-          - sensor.deye_sun300g3_eu_230_solar_total_energy
+          - sensor.${HA_ENTITY_SLUG}_solar_total_energy
         days_to_show: 30
         stat_types:
           - change
@@ -79,7 +79,7 @@ views:
             icon: mdi:chart-timeline-variant
             tap_action:
               action: url
-              url_path: /history?entity_id=sensor.deye_sun300g3_eu_230_solar_ac_power,sensor.deye_sun300g3_eu_230_solar_pv_power,sensor.solar_today_energy_computed,sensor.deye_sun300g3_eu_230_solar_total_energy,sensor.deye_sun300g3_eu_230_solar_grid_voltage,sensor.deye_sun300g3_eu_230_solar_grid_frequency,sensor.deye_sun300g3_eu_230_solar_inverter_temperature
+              url_path: /history?entity_id=sensor.${HA_ENTITY_SLUG}_solar_ac_power,sensor.${HA_ENTITY_SLUG}_solar_pv_power,sensor.solar_today_energy_computed,sensor.${HA_ENTITY_SLUG}_solar_total_energy,sensor.${HA_ENTITY_SLUG}_solar_grid_voltage,sensor.${HA_ENTITY_SLUG}_solar_grid_frequency,sensor.${HA_ENTITY_SLUG}_solar_inverter_temperature
 
       - type: markdown
         content: >

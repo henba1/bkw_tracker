@@ -13,6 +13,8 @@ services:
       - ./mosquitto/config/passwd:/mosquitto/config/passwd:ro
       - ./mosquitto/data:/mosquitto/data
 
+  # Optional acquisition adapter — omit when ACQUISITION_ADAPTER=external in stack.env
+  # (your hardware or another bridge publishes directly to Mosquitto).
   deye-bridge:
     image: ghcr.io/kbialek/deye-inverter-mqtt:latest
     container_name: deye-bridge

@@ -1,0 +1,105 @@
+# Computed daily energy — lifetime total minus baseline captured at 03:00 local
+# Replaces unreliable inverter day_energy for dashboards and Energy UI
+
+command_line:
+  - sensor:
+      name: Solar Baseline Capture
+      unique_id: sun300g3_baseline_capture
+      command: python3 /config/scripts/solar_baseline_value.py
+      scan_interval: 86400
+      value_template: "{{ value | float(0) }}"
+      unit_of_measurement: kWh
+
+input_number:
+  solar_baseline_total_kwh:
+    name: Solar baseline total kWh (03:00 snapshot)
+    min: 0
+    max: 999999
+    step: 0.001
+    mode: box
+    initial: 0
+    unit_of_measurement: kWh
+
+template:
+  - sensor:
+      - name: "Solar Today Energy (computed)"
+        unique_id: sun300g3_day_energy_computed
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total
+        icon: mdi:solar-power
+        availability: >
+          {{ states('binary_sensor.deye_sun300g3_eu_230_solar_logger_online') == 'on'
+             and states('sensor.deye_sun300g3_eu_230_solar_total_energy') not in
+             ['unknown', 'unavailable', 'none', ''] }}
+        state: >
+          {% set total = states('sensor.deye_sun300g3_eu_230_solar_total_energy') | float(none) %}
+          {% set base = states('input_number.solar_baseline_total_kwh') | float(0) %}
+          {% if total is none %}
+            none
+          {% else %}
+            {{ [0, total - base] | max | round(3) }}
+          {% endif %}
+
+automation:
+  - id: solar_baseline_reset_0300
+    alias: Solar — reset daily baseline at 03:00
+    description: Snapshot lifetime total at 03:00; today = total − baseline (no sun 00:00–03:00 here).
+    mode: single
+    trigger:
+      - platform: time
+        at: "03:00:00"
+    action:
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.solar_baseline_capture
+      - delay:
+          seconds: 2
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.solar_baseline_total_kwh
+        data:
+          value: "{{ states('sensor.solar_baseline_capture') | float(0) }}"
+
+  - id: solar_baseline_init_after_start
+    alias: Solar — init baseline after restart (mid-day install)
+    description: >
+      After 03:00, seed baseline from lifetime total at today's 03:00 (recorder history).
+      Also recovers if baseline was wrongly set to the current total (today would read 0).
+    mode: single
+    trigger:
+      - platform: homeassistant
+        event: start
+        id: ha_start
+      - platform: state
+        entity_id: sensor.deye_sun300g3_eu_230_solar_total_energy
+        id: total_available
+    condition:
+      - condition: template
+        value_template: "{{ now().hour >= 3 }}"
+      - condition: template
+        value_template: >
+          {% set total_entity = 'sensor.deye_sun300g3_eu_230_solar_total_energy' %}
+          {% set total = states(total_entity) %}
+          {% set base = states('input_number.solar_baseline_total_kwh') | float(0) %}
+          {% set total_f = total | float(0) %}
+          {{ total not in ['unknown', 'unavailable', 'none', ''] and total_f > 0 and
+             (base == 0 or (total_f - base) | abs < 0.001) }}
+    action:
+      - choose:
+          - conditions:
+              - condition: trigger
+                id: ha_start
+            sequence:
+              - delay:
+                  seconds: 30
+      - service: homeassistant.update_entity
+        target:
+          entity_id: sensor.solar_baseline_capture
+      - delay:
+          seconds: 2
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.solar_baseline_total_kwh
+        data:
+          value: "{{ states('sensor.solar_baseline_capture') | float(0) }}"

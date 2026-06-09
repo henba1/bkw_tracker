@@ -19,7 +19,7 @@ Commands:
   ps              docker compose ps
   logs [service]  docker compose logs -f [service]
   verify-broker   Test MQTT broker connectivity (Ctrl-C to exit)
-  verify-metrics  Wait for one ac/active_power message (Phase 2 accept)
+  verify-metrics  Wait for one AC power message on the configured MQTT topic profile
   smoke           Run SolarmanV5 smoke read using stack.env logger settings
 
 Configure everything in stack.env (copy from stack.env.example).
@@ -37,35 +37,60 @@ cmd_init() {
         return 0
     fi
     render_mqtt_passwd
-    if require_logger_env 2>/dev/null; then
-        render_stack_configs
-        echo "Full stack config rendered."
+    if render_ha_configs 2>/dev/null; then
+        if acquisition_adapter_enabled && require_logger_env 2>/dev/null; then
+            render_deye_bridge_config
+            echo "Full stack config rendered."
+        elif acquisition_adapter_enabled; then
+            echo "HA package rendered. Set LOGGER_IP in stack.env before starting deye-bridge."
+        else
+            echo "HA package rendered (external MQTT acquisition)."
+        fi
     else
-        echo "Broker config rendered. Set LOGGER_IP in stack.env before starting deye-bridge."
+        echo "Broker config rendered. Complete stack.env (MQTT_PASSWORD, etc.) then re-run init."
     fi
     echo "Start broker only: ./scripts/stack.sh up mosquitto"
-    echo "Start full stack (after logger online): ./scripts/stack.sh up"
+    echo "Start full stack: ./scripts/stack.sh up"
 }
 
 cmd_render() {
     render_mqtt_passwd
-    if require_logger_env 2>/dev/null; then
-        render_stack_configs
-    else
-        echo "Skipped deye-bridge/HA render — set LOGGER_IP and LOGGER_SERIAL in stack.env."
+    render_ha_configs
+    if acquisition_adapter_enabled; then
+        if require_logger_env 2>/dev/null; then
+            render_deye_bridge_config
+        else
+            echo "Skipped deye-bridge render — set LOGGER_IP and LOGGER_SERIAL in stack.env."
+        fi
     fi
 }
 
 cmd_up() {
     render_mqtt_passwd
     local services=("$@")
-    if ((${#services[@]} == 0)) || [[ " ${services[*]} " == *" deye-bridge "* ]]; then
-        render_stack_configs
+    local render_ha=false render_bridge=false
+    if ((${#services[@]} == 0)); then
+        render_ha=true
+        acquisition_adapter_enabled && render_bridge=true
+    else
+        for svc in "${services[@]}"; do
+            [[ "$svc" == "deye-bridge" ]] && render_bridge=true
+            [[ "$svc" == "mosquitto" || "$svc" == "deye-bridge" ]] && render_ha=true
+        done
+    fi
+    if [[ "$render_ha" == true ]]; then
+        render_ha_configs
+    fi
+    if [[ "$render_bridge" == true ]] && acquisition_adapter_enabled; then
+        render_deye_bridge_config
     fi
     if ((${#services[@]} > 0)); then
         compose_cmd up -d "${services[@]}"
-    else
+    elif acquisition_adapter_enabled; then
         compose_cmd up -d
+    else
+        compose_cmd up -d mosquitto
+        echo "ACQUISITION_ADAPTER=external — started mosquitto only (no bundled adapter)."
     fi
 }
 
@@ -102,7 +127,8 @@ cmd_verify_broker() {
 
 cmd_verify_metrics() {
     require_mqtt_env
-    local topic="${MQTT_TOPIC_PREFIX}/ac/active_power"
+    load_mqtt_topic_profile
+    local topic="${MQTT_TOPIC_PREFIX}/${MQTT_TOPIC_AC_POWER}"
     local wait_seconds="${VERIFY_METRICS_TIMEOUT:-60}"
     echo "Waiting for MQTT on ${topic} (timeout ${wait_seconds}s)..."
     local payload
@@ -110,7 +136,7 @@ cmd_verify_metrics() {
         -u "$MQTT_USER" -P "$MQTT_PASSWORD" \
         -t "$topic" -C 1 -W "$wait_seconds" 2>/dev/null || true)"
     if [[ -z "$payload" ]]; then
-        echo "FAIL: no message on ${topic} — is deye-bridge running and logger online?" >&2
+        echo "FAIL: no message on ${topic} — is acquisition running and the device online?" >&2
         return 1
     fi
     echo "OK: ${topic} = ${payload}"

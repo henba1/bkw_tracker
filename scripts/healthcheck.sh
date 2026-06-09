@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Watchdog: restart deye-bridge if no MQTT traffic for too long during daylight.
+# Watchdog: restart acquisition container if no MQTT traffic for too long during daylight.
+# Default CONTAINER=deye-bridge; override in cron when using another adapter.
 # Install via cron: */5 * * * * /path/to/bkw_tracker/scripts/healthcheck.sh
 set -euo pipefail
 
