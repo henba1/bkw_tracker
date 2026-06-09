@@ -26,7 +26,7 @@ Runs on a small always-on Linux host with Docker (e.g. Raspberry Pi).
 
 ### Data acquisition (MQTT, ~30 s)
 
-Published under `solar/<site>/<inverter_id>/` (default `solar/home/sun300g3`):
+Published under `solar/{site}/{inverter_id}/` (default `solar/home/sun300g3`):
 
 | Stream | Topic suffix | Unit |
 |---|---|---|
