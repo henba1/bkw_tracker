@@ -19,6 +19,8 @@ for arg in "$@"; do
 done
 
 require_mqtt_env
+export HA_ENTITY_SLUG
+HA_ENTITY_SLUG="${HA_ENTITY_SLUG:-$(slugify_ha_entity_slug "${HA_INVERTER_MANUFACTURER:-Solar}" "${HA_INVERTER_MODEL:-Inverter}")}"
 
 HA_CONFIG="$(resolve_ha_config || true)"
 if [[ -z "$HA_CONFIG" ]]; then
@@ -111,10 +113,10 @@ fi
 if [[ "$RESTART_HA" == true ]]; then
     echo "Restarting ${HA_CONTAINER}..."
     docker restart "$HA_CONTAINER"
-    echo "Done. Energy Dashboard: lifetime → sensor.deye_sun300g3_eu_230_solar_total_energy;"
-    echo "  today → sensor.solar_today_energy_computed (inverter day_energy is unreliable)"
+    echo "Done. Energy Dashboard: lifetime → sensor.${HA_ENTITY_SLUG}_solar_total_energy;"
+    echo "  today → sensor.solar_today_energy_computed (inverter day_energy may be unreliable)"
 else
     echo "Apply config: docker restart ${HA_CONTAINER}"
-    echo "Then Energy Dashboard: lifetime → sensor.deye_sun300g3_eu_230_solar_total_energy;"
+    echo "Then Energy Dashboard: lifetime → sensor.${HA_ENTITY_SLUG}_solar_total_energy;"
     echo "  today → sensor.solar_today_energy_computed"
 fi

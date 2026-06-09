@@ -11,7 +11,7 @@ from pathlib import Path
 
 DB_PATH = Path("/config/home-assistant_v2.db")
 EXPORT_DIR = Path("/config/exports")
-ENTITY_PREFIXES = ("sensor.deye_sun300g3_eu_230", "binary_sensor.deye_sun300g3_eu_230")
+ENTITY_PREFIXES = ("sensor.${HA_ENTITY_SLUG}", "binary_sensor.${HA_ENTITY_SLUG}")
 
 
 def export_solar_csv() -> Path:
