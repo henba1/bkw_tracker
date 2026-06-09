@@ -33,7 +33,7 @@ For dashboards, Energy Dashboard, and computed daily energy to work, your hardwa
 | **Payloads** | Numbers as plain decimals; status as **`online`** / **`offline`** |
 | **Update rate** | Live power at least every **~120 s** |
 
-Recommended: PV power, grid voltage/frequency, temperature, device availability. LAN access is only required when using a bundled adapter that polls the device — **native MQTT publishers can run anywhere that reaches the broker**. Full contract: [`docs/SCHEMA.md`](docs/SCHEMA.md).
+Recommended: PV power, grid voltage/frequency, temperature, device availability. LAN access is only required when using a bundled adapter that polls the device — **native MQTT publishers can run anywhere that reaches the broker**.
 
 ---
 
@@ -127,8 +127,6 @@ The stack is **vendor-agnostic at the MQTT layer**. Pick one path:
 4. Point your publisher at this broker (`MQTT_USER` / `MQTT_PASSWORD`, host IP, port `1883`)
 5. `./scripts/stack.sh verify-metrics`
 6. `./scripts/install_ha_package.sh --restart`
-
-Full contract and hard requirements: [`docs/SCHEMA.md`](docs/SCHEMA.md).
 
 ### Path 2 — Bundled Deye adapter (included, tested on SUN300G3)
 
