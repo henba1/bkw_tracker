@@ -12,29 +12,9 @@
   </a>
 </p>
 
-```mermaid
-flowchart LR
-  subgraph acquisition["Acquisition (vendor-specific)"]
-    HW["Inverter / logger / solarbank"]
-    ADP["Adapter container\ne.g. deye-inverter-mqtt"]
-    HW <-->|"LAN protocol"| ADP
-  end
-
-  subgraph contract["Stable contract"]
-    MQTT["Mosquitto\nsolar/site/inverter/…"]
-  end
-
-  subgraph consumers["Consumers (vendor-agnostic)"]
-    HA["Home Assistant\nMQTT + recorder"]
-    EXP["CSV export"]
-    HC["Watchdog\nhealthcheck.sh"]
-  end
-
-  ADP -->|"publish metrics + status"| MQTT
-  MQTT --> HA
-  MQTT --> HC
-  HA --> EXP
-```
+<p align="center">
+  <img src="assets/architecture.svg" alt="System architecture: inverter and adapter publish to Mosquitto; Home Assistant, watchdog, and CSV export consume MQTT data" width="720">
+</p>
 
 Reads power and energy from a **Deye micro-inverter** (tested on SUN300G3), publishes a live **MQTT** stream, and surfaces it in **Home Assistant** with dashboards and CSV export.
 
