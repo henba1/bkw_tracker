@@ -20,12 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
-      - name: Build site from README
+      - name: Prepare Jekyll source
         run: |
-          mkdir -p _site/assets
-          cp README.md _site/index.md
-          cp assets/image.png _site/assets/image.png
-          cat > _site/_config.yml <<'EOF'
+          mkdir -p pages/assets
+          cp README.md pages/index.md
+          if [ -f assets/image.png ]; then
+            cp assets/image.png pages/assets/image.png
+          fi
+          cat > pages/_config.yml <<'EOF'
           title: Deye solar inverter monitoring
           description: MQTT pipeline for Deye micro-inverters and Home Assistant
           theme: jekyll-theme-cayman
@@ -33,7 +35,7 @@ jobs:
           EOF
       - uses: actions/jekyll-build-pages@v1
         with:
-          source: _site
+          source: pages
       - uses: actions/upload-pages-artifact@v3
 
   deploy:
