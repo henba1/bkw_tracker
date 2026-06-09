@@ -1,0 +1,20 @@
+# CSV export for solar recorder history — requires /config/scripts/export_solar_csv.py
+
+shell_command:
+  export_solar_csv: python3 /config/scripts/export_solar_csv.py
+
+script:
+  export_solar_csv:
+    alias: Export solar CSV
+    icon: mdi:download
+    mode: single
+    sequence:
+      - service: shell_command.export_solar_csv
+      - delay:
+          seconds: 2
+      - service: persistent_notification.create
+        data:
+          title: Solar data exported
+          message: >
+            CSV written to /config/exports/solar_timeseries_*.csv
+            (all solar sensor history). Download via File editor, SFTP, or docker cp.
