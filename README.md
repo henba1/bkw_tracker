@@ -21,7 +21,7 @@ flowchart LR
   end
 
   subgraph contract["Stable contract"]
-    MQTT["Mosquitto\nsolar/<site>/<id>/…"]
+    MQTT["Mosquitto\nsolar/site/inverter/…"]
   end
 
   subgraph consumers["Consumers (vendor-agnostic)"]
