@@ -22,30 +22,28 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Prepare Jekyll source
         run: |
-          mkdir -p pages/assets pages/_includes
-          cp README.md pages/index.md
-          if [ -f assets/image.png ]; then
-            cp assets/image.png pages/assets/image.png
-          fi
+          mkdir -p pages/assets
+          cat > pages/index.md <<'EOF'
+          ---
+          layout: default
+          title: Deye solar inverter monitoring
+          ---
+          EOF
+          tail -n +1 README.md >> pages/index.md
+          # GitHub project pages live under /bkw_tracker/ — fix asset URLs for HTML <img> tags
+          sed -i 's|src="assets/|src="/bkw_tracker/assets/|g' pages/index.md
+          for asset in image.png architecture.svg; do
+            if [ -f "assets/${asset}" ]; then
+              cp "assets/${asset}" "pages/assets/${asset}"
+            fi
+          done
           cat > pages/_config.yml <<'EOF'
           title: Deye solar inverter monitoring
           description: MQTT pipeline for Deye micro-inverters and Home Assistant
           theme: jekyll-theme-cayman
           markdown: GFM
-          EOF
-          cat > pages/_includes/footer-custom.html <<'EOF'
-          <script type="module">
-            import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
-            mermaid.initialize({ startOnLoad: false, theme: "neutral" });
-            for (const code of document.querySelectorAll("code.language-mermaid")) {
-              const wrapper = code.closest("div.highlighter-rouge") ?? code.parentElement;
-              const graph = document.createElement("pre");
-              graph.className = "mermaid";
-              graph.textContent = code.textContent;
-              wrapper?.replaceWith(graph);
-            }
-            await mermaid.run({ querySelector: ".mermaid" });
-          </script>
+          baseurl: "/bkw_tracker"
+          url: "https://henba1.github.io"
           EOF
       - uses: actions/jekyll-build-pages@v1
         with:
