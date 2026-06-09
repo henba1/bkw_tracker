@@ -1,4 +1,4 @@
-# Phase 4 dashboard — entity IDs include device name prefix from HA MQTT grouping
+# Solar Lovelace dashboard — entity IDs from HA MQTT device grouping
 
 title: Solar
 views:
@@ -6,6 +6,15 @@ views:
     path: production
     icon: mdi:solar-power
     cards:
+      - type: statistics-graph
+        title: AC Power (7 days)
+        entities:
+          - sensor.deye_sun300g3_eu_230_solar_ac_power
+        days_to_show: 7
+        stat_types:
+          - mean
+          - max
+
       - type: gauge
         entity: sensor.deye_sun300g3_eu_230_solar_ac_power
         name: AC Output
@@ -35,24 +44,45 @@ views:
       - type: entities
         title: Energy
         entities:
-          - entity: sensor.deye_sun300g3_eu_230_solar_today_energy
-            name: Today
+          - entity: sensor.solar_today_energy_computed
+            name: Today (computed)
           - entity: sensor.deye_sun300g3_eu_230_solar_total_energy
             name: Lifetime
 
-      - type: statistics-graph
-        title: AC Power (7 days)
+      - type: history-graph
+        title: AC Power — live history
+        hours_to_show: 48
+        refresh_interval: 60
         entities:
-          - sensor.deye_sun300g3_eu_230_solar_ac_power
-        days_to_show: 7
-        stat_types:
-          - mean
-          - max
+          - entity: sensor.deye_sun300g3_eu_230_solar_ac_power
+            name: AC Power (W)
 
       - type: statistics-graph
-        title: Today Energy (30 days)
+        title: Daily AC Energy (30 days)
         entities:
-          - sensor.deye_sun300g3_eu_230_solar_today_energy
+          - sensor.deye_sun300g3_eu_230_solar_total_energy
         days_to_show: 30
         stat_types:
           - change
+        chart_type: bar
+
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Export all solar data
+            icon: mdi:download
+            tap_action:
+              action: call-service
+              service: script.export_solar_csv
+          - type: button
+            name: Open History
+            icon: mdi:chart-timeline-variant
+            tap_action:
+              action: url
+              url_path: /history?entity_id=sensor.deye_sun300g3_eu_230_solar_ac_power,sensor.deye_sun300g3_eu_230_solar_pv_power,sensor.solar_today_energy_computed,sensor.deye_sun300g3_eu_230_solar_total_energy,sensor.deye_sun300g3_eu_230_solar_grid_voltage,sensor.deye_sun300g3_eu_230_solar_grid_frequency,sensor.deye_sun300g3_eu_230_solar_inverter_temperature
+
+      - type: markdown
+        content: >
+          **Export:** runs a CSV dump of all recorder history for solar entities into
+          `/config/exports/`. Download via **File editor** add-on, SFTP, or
+          `docker cp homeassistant:/config/exports/ ./`

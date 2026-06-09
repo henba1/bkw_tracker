@@ -7,6 +7,13 @@ PUBLISH.md
 .publishignore
 docs/
 
+# --- maintainer tooling  ---
+scripts/release.sh
+scripts/smoke_read.py
+pyproject.toml
+uv.lock
+.github/
+
 # --- build artifacts ---
 dist/
 .venv/

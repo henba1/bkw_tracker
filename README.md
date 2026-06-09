@@ -12,9 +12,81 @@
   </a>
 </p>
 
-Reads power and energy from a **Deye micro-inverter** (tested on SUN300G3) and publishes to **MQTT** for **Home Assistant**.
+```mermaid
+flowchart LR
+  subgraph acquisition["Acquisition (vendor-specific)"]
+    HW["Inverter / logger / solarbank"]
+    ADP["Adapter container\ne.g. deye-inverter-mqtt"]
+    HW <-->|"LAN protocol"| ADP
+  end
+
+  subgraph contract["Stable contract"]
+    MQTT["Mosquitto\nsolar/<site>/<id>/…"]
+  end
+
+  subgraph consumers["Consumers (vendor-agnostic)"]
+    HA["Home Assistant\nMQTT + recorder"]
+    EXP["CSV export"]
+    HC["Watchdog\nhealthcheck.sh"]
+  end
+
+  ADP -->|"publish metrics + status"| MQTT
+  MQTT --> HA
+  MQTT --> HC
+  HA --> EXP
+```
+
+Reads power and energy from a **Deye micro-inverter** (tested on SUN300G3), publishes a live **MQTT** stream, and surfaces it in **Home Assistant** with dashboards and CSV export.
 
 Runs on a small always-on Linux host with Docker (e.g. Raspberry Pi).
+
+---
+
+## Features
+
+### Data acquisition (MQTT, ~30 s)
+
+Published under `solar/<site>/<inverter_id>/` (default `solar/home/sun300g3`):
+
+| Stream | Topic suffix | Unit |
+|---|---|---|
+| AC output power | `ac/active_power` | W |
+| PV / DC power | `dc/pv1/power` | W |
+| Energy today | `day_energy` | kWh |
+| Lifetime energy | `total_energy` | kWh |
+| Grid voltage | `ac/l1/voltage` | V |
+| Grid frequency | `ac/freq` | Hz |
+| Inverter temperature | `radiator_temp` | °C |
+| Bridge online (LWT) | `status` | online / offline |
+| Logger online | `logger_status` | online / offline |
+
+Authenticated **Mosquitto** broker; `deye-bridge` polls the inverter logger on the LAN.
+
+### Home Assistant
+
+- MQTT sensors with correct `device_class` / `state_class` (Energy Dashboard–ready)
+- Device grouping under one inverter device
+- `unavailable` when logger drops (`logger_status` + 120 s `expire_after`)
+- One-command install into an existing `homeassistant` Docker container
+- **Solar** Lovelace dashboard: live gauge, entity cards, 48 h power history, 30-day daily energy bars, 7-day power statistics
+- **Energy Dashboard** support via lifetime energy sensor (`total_increasing`)
+
+### Export & history
+
+- **CSV export** button — dumps all recorder time-series for solar entities to `/config/exports/`
+- **Open History** — HA history view for all solar streams
+- Long-term statistics via HA recorder (graphs on the dashboard)
+
+### Operations
+
+- Interactive `./setup.sh` wizard (`stack.env` IaC)
+- `./scripts/stack.sh` — render configs, up/down, verify broker & metrics
+- Optional **watchdog cron** — restarts bridge if MQTT goes silent during daylight
+- Docker `restart: unless-stopped` on broker and bridge
+
+### Optional diagnostics (git clone / dev)
+
+- `uv` + `pysolarmanv5` — network scan, Solarman smoke read (not in release tarball)
 
 ---
 
@@ -23,7 +95,7 @@ Runs on a small always-on Linux host with Docker (e.g. Raspberry Pi).
 | Requirement | Details |
 |---|---|
 | **Host** | Linux with Docker and Docker Compose v2 |
-| **Python** (optional) | 3.11+ with [uv](https://docs.astral.sh/uv/) — for discovery/smoke tools only |
+| **Python** (optional) | 3.11+ with [uv](https://docs.astral.sh/uv/) — discovery/smoke tools only |
 | **Network** | Host on the same LAN as the inverter |
 | **Inverter** | Joined to your home Wi-Fi (not only its AP hotspot) |
 | **Daylight** | First inverter test needs sun — the built-in Wi-Fi module is solar-powered |
@@ -57,38 +129,33 @@ This project runs **Mosquitto + deye-bridge** only — it does not install Home 
 
 The wizard asks for an MQTT password, inverter IP (skippable), and logger serial. It writes `stack.env`, starts Mosquitto, and optionally starts data collection.
 
-Note the printed **host IP**, **MQTT port** (`1883`), **username** (`solar`), and **password** — needed if you configure HA manually.
-
 ```bash
-./scripts/stack.sh up          # start broker + bridge
-./scripts/stack.sh verify-metrics   # one MQTT reading (needs daylight + logger online)
+./scripts/stack.sh up
+./scripts/stack.sh verify-metrics   # needs daylight + logger online
 ```
 
 ---
 
 ## Home Assistant
 
-One command installs sensors, Lovelace dashboard, and MQTT broker config (HA 2024+ requires broker via config entry, not YAML):
-
 ```bash
 ./scripts/install_ha_package.sh --restart
 ```
 
-Then in HA: **Settings → Dashboards → Energy** → add solar production:
+Then: **Settings → Dashboards → Energy** → add `sensor.deye_sun300g3_eu_230_solar_total_energy`.
 
-`sensor.deye_sun300g3_eu_230_solar_total_energy`
-
-A **Solar** sidebar dashboard is added automatically. Entity names include the device prefix `deye_sun300g3_eu_230_…` — sensors show `unavailable` when the logger is offline (expected at night).
-
-**Overrides** in `stack.env`: `HA_CONTAINER`, `HA_CONFIG`, `MQTT_BROKER_HOST`.
+Sidebar **Solar** dashboard: live power, daily energy, history graphs, **Export all solar data** (CSV).
 
 ---
 
-## Add inverter later
+## Using a different inverter
 
-```bash
-./setup.sh --add-inverter
-```
+| Change | Effort |
+|---|---|
+| **Another Deye model** | Edit `stack.env` (`LOGGER_*`, `HA_INVERTER_*`, `DEYE_METRIC_GROUPS`) → `./scripts/stack.sh render && ./scripts/stack.sh up` |
+| **Different brand / solarbank** | Replace `deye-bridge` in `compose.yml` with that vendor’s MQTT adapter; align MQTT topics (or add a remap layer); re-render HA package |
+
+The stack is built around a **stable MQTT contract** between acquisition and Home Assistant. Mosquitto, HA, export, and the watchdog stay the same; only the acquisition layer (and topic names if needed) change. Full interchangeability notes, canonical topic schema, and system diagram: [`docs/SCHEMA.md`](docs/SCHEMA.md) *(maintainer / integrator doc)*.
 
 ---
 
@@ -106,31 +173,17 @@ A **Solar** sidebar dashboard is added automatically. Entity names include the d
 
 Manual config: copy `stack.env.example` → `stack.env`, then `./scripts/stack.sh init`.
 
-### Python tools (optional)
-
-Discovery and smoke-test scripts use the `pysolarmanv5` submodule:
-
-```bash
-uv sync          # creates .venv, installs deps from pyproject.toml
-uv run scripts/smoke_read.py --help
-uv run solarman-uni-scan eth0
-```
-
-The Docker stack does not need Python — only these diagnostic commands do.
-
 ---
 
 ## Troubleshooting
 
 **Inverter unreachable** — wait for daylight; confirm IP in router; run `./setup.sh --add-inverter`.
 
-**HA shows no data** — run `./scripts/stack.sh up`; re-run `./scripts/install_ha_package.sh --restart`; check logger is online (`docker logs deye-bridge --tail 20`).
+**HA shows no data** — run `./scripts/stack.sh up`; re-run `./scripts/install_ha_package.sh --restart`; check logger (`docker logs deye-bridge --tail 20`).
 
-**Wrong serial** — edit `LOGGER_SERIAL` in `stack.env`, then `./scripts/stack.sh render && ./scripts/stack.sh up`. If reads still fail, try `LOGGER_SERIAL_FALLBACK`.
+**Wrong serial** — edit `LOGGER_SERIAL` in `stack.env`, then `./scripts/stack.sh render && ./scripts/stack.sh up`.
 
-**Reads time out** — uncomment `DEYE_LOGGER_MAX_REG_RANGE_LENGTH=16` in `stack.env`.
-
-**Different Deye model** — edit logger keys in `stack.env` (`LOGGER_PROTOCOL`, `LOGGER_PORT`, `HA_INVERTER_MODEL`), render, restart.
+**Export CSV** — after using the dashboard button: `docker cp homeassistant:/config/exports/ ./`
 
 **Start over**
 
