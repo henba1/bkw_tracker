@@ -29,8 +29,7 @@ template:
         state_class: total
         icon: mdi:solar-power
         availability: >
-          {{ states('binary_sensor.deye_sun300g3_eu_230_solar_logger_online') == 'on'
-             and states('sensor.deye_sun300g3_eu_230_solar_total_energy') not in
+          {{ states('sensor.deye_sun300g3_eu_230_solar_total_energy') not in
              ['unknown', 'unavailable', 'none', ''] }}
         state: >
           {% set total = states('sensor.deye_sun300g3_eu_230_solar_total_energy') | float(none) %}
