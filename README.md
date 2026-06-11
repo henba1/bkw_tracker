@@ -4,7 +4,7 @@
 
 </div>
 
-# Solar inverter monitoring (MQTT)
+# Solar Inverter Monitoring (MQTT)
 
 <p align="center">
   <a href="https://henba1.github.io/bkw_tracker/">
@@ -20,7 +20,7 @@ Monitors **any inverter or solarbank that exposes live data over MQTT**, surface
 
 A **bundled Deye adapter** is included and tested on SUN300G3; you can also point the stack at metrics your hardware already publishes.
 
-### What your inverter must provide
+### What Your Inverter Must Provide
 
 For dashboards, Energy Dashboard, and computed daily energy to work, your hardware (or its MQTT bridge) needs to meet these **minimum** requirements:
 
@@ -109,7 +109,7 @@ This project runs **Mosquitto** (+ optional acquisition adapter). It does not in
 
 ---
 
-## Connecting your inverter
+## Connecting Your Inverter
 
 The stack is **vendor-agnostic at the MQTT layer**. Pick one path:
 
