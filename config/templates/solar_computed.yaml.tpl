@@ -29,8 +29,7 @@ template:
         state_class: total
         icon: mdi:solar-power
         availability: >
-          {{ states('binary_sensor.${HA_ENTITY_SLUG}_solar_logger_online') == 'on'
-             and states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') not in
+          {{ states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') not in
              ['unknown', 'unavailable', 'none', ''] }}
         state: >
           {% set total = states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') | float(none) %}
