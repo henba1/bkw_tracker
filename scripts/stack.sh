@@ -21,6 +21,9 @@ Commands:
   verify-broker   Test MQTT broker connectivity (Ctrl-C to exit)
   verify-metrics  Wait for one AC power message on the configured MQTT topic profile
   smoke           Run SolarmanV5 smoke read using stack.env logger settings
+  probe           Probe logger IP/ports with spaced wakeup attempts
+  probe-watch     Watch logger_status; probe after N consecutive offline messages
+  resilience      Run logger-resilience watcher in the foreground (same as the container)
 
 Configure everything in stack.env (copy from stack.env.example).
 EOF
@@ -75,7 +78,7 @@ cmd_up() {
     else
         for svc in "${services[@]}"; do
             [[ "$svc" == "deye-bridge" ]] && render_bridge=true
-            [[ "$svc" == "mosquitto" || "$svc" == "deye-bridge" ]] && render_ha=true
+            [[ "$svc" == "mosquitto" || "$svc" == "deye-bridge" || "$svc" == "logger-resilience" ]] && render_ha=true
         done
     fi
     if [[ "$render_ha" == true ]]; then
@@ -85,9 +88,9 @@ cmd_up() {
         render_deye_bridge_config
     fi
     if ((${#services[@]} > 0)); then
-        compose_cmd up -d "${services[@]}"
+        compose_up "${services[@]}"
     elif acquisition_adapter_enabled; then
-        compose_cmd up -d
+        compose_up
     else
         compose_cmd up -d mosquitto
         echo "ACQUISITION_ADAPTER=external — started mosquitto only (no bundled adapter)."
@@ -157,6 +160,56 @@ cmd_smoke() {
     fi
 }
 
+cmd_probe() {
+    require_logger_env
+    local -a probe_args=("${STACK_ROOT}/scripts/probe_logger.py" "$@")
+    if command -v uv &>/dev/null && [[ -f "${STACK_ROOT}/pyproject.toml" ]]; then
+        uv run --project "${STACK_ROOT}" "${probe_args[@]}"
+    else
+        python3 "${probe_args[@]}"
+    fi
+}
+
+cmd_probe_watch() {
+    require_logger_env
+    local threshold="${1:-3}"
+    cmd_probe --after-offline "$threshold"
+}
+
+resilience_enabled() {
+    load_stack_env
+    [[ "${LOGGER_RESILIENCE_ENABLED:-true}" == "true" ]]
+}
+
+compose_up() {
+    local -a services=("$@")
+    local -a compose_args=()
+    local wants_resilience=false
+
+    if ((${#services[@]} == 0)); then
+        acquisition_adapter_enabled && resilience_enabled && wants_resilience=true
+    else
+        for svc in "${services[@]}"; do
+            [[ "$svc" == "logger-resilience" ]] && wants_resilience=true
+        done
+    fi
+
+    if [[ "$wants_resilience" == true ]]; then
+        compose_args=(--profile resilience)
+    fi
+
+    if ((${#services[@]} > 0)); then
+        compose_cmd "${compose_args[@]}" up -d --build "${services[@]}"
+    else
+        compose_cmd "${compose_args[@]}" up -d --build
+    fi
+}
+
+cmd_resilience() {
+    require_logger_env
+    exec python3 "${STACK_ROOT}/scripts/resilience_watcher.py"
+}
+
 main() {
     local cmd="${1:-}"
     shift || true
@@ -171,6 +224,9 @@ main() {
         verify-broker) cmd_verify_broker "$@" ;;
         verify-metrics) cmd_verify_metrics "$@" ;;
         smoke) cmd_smoke "$@" ;;
+        probe) cmd_probe "$@" ;;
+        probe-watch) cmd_probe_watch "${1:-3}" ;;
+        resilience) cmd_resilience ;;
         -h | --help | help | "") usage ;;
         *)
             echo "Unknown command: ${cmd}" >&2

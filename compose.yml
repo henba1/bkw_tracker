@@ -20,3 +20,16 @@ services:
     container_name: deye-bridge
     restart: unless-stopped
     env_file: ./deye-bridge/config.env
+
+  # Spaced LAN wakeup probes when deye-bridge publishes logger_status=offline.
+  logger-resilience:
+    profiles: ["resilience"]
+    build: ./logger-resilience
+    container_name: logger-resilience
+    restart: unless-stopped
+    network_mode: host
+    env_file: ./stack.env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mosquitto
