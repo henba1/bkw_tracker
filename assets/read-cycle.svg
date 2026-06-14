@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 620" role="img" aria-label="Normal read cycle: deye-bridge polls the logger on LAN and publishes metrics to Mosquitto for Home Assistant">
+  <defs>
+    <marker id="arrow-solid" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#57606a"/>
+    </marker>
+    <marker id="arrow-dashed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#57606a"/>
+    </marker>
+  </defs>
+  <style>
+    .participant { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1.5; }
+    .lifeline { stroke: #d0d7de; stroke-width: 1.5; stroke-dasharray: 5 4; fill: none; }
+    .title { font: 600 12px system-ui, sans-serif; fill: #24292f; }
+    .msg { font: 12px system-ui, sans-serif; fill: #24292f; }
+    .note { fill: #fff8c5; stroke: #d4a72c; stroke-width: 1; }
+    .note-text { font: 11px system-ui, sans-serif; fill: #24292f; }
+    .side-note { fill: #f6f8fa; stroke: #d0d7de; stroke-width: 1; }
+    .side-text { font: 10px system-ui, sans-serif; fill: #57606a; }
+    .num { font: 10px system-ui, sans-serif; fill: #57606a; }
+    .arrow-solid { stroke: #57606a; stroke-width: 1.5; fill: none; marker-end: url(#arrow-solid); }
+    .arrow-dashed { stroke: #57606a; stroke-width: 1.5; fill: none; stroke-dasharray: 5 4; marker-end: url(#arrow-dashed); }
+  </style>
+
+  <!-- Participants -->
+  <rect class="participant" x="70" y="18" width="140" height="40" rx="6"/>
+  <text class="title" x="140" y="43" text-anchor="middle">deye-bridge</text>
+  <rect class="participant" x="270" y="18" width="140" height="40" rx="6"/>
+  <text class="title" x="340" y="43" text-anchor="middle">Logger</text>
+  <rect class="participant" x="470" y="18" width="140" height="40" rx="6"/>
+  <text class="title" x="540" y="43" text-anchor="middle">Mosquitto</text>
+  <rect class="participant" x="670" y="18" width="160" height="40" rx="6"/>
+  <text class="title" x="750" y="43" text-anchor="middle">Home Assistant</text>
+
+  <!-- Lifelines -->
+  <line class="lifeline" x1="140" y1="58" x2="140" y2="560"/>
+  <line class="lifeline" x1="340" y1="58" x2="340" y2="560"/>
+  <line class="lifeline" x1="540" y1="58" x2="540" y2="560"/>
+  <line class="lifeline" x1="750" y1="58" x2="750" y2="560"/>
+
+  <!-- Bottom participant boxes -->
+  <rect class="participant" x="70" y="560" width="140" height="40" rx="6"/>
+  <text class="title" x="140" y="585" text-anchor="middle">deye-bridge</text>
+  <rect class="participant" x="270" y="560" width="140" height="40" rx="6"/>
+  <text class="title" x="340" y="585" text-anchor="middle">Logger</text>
+  <rect class="participant" x="470" y="560" width="140" height="40" rx="6"/>
+  <text class="title" x="540" y="585" text-anchor="middle">Mosquitto</text>
+  <rect class="participant" x="670" y="560" width="160" height="40" rx="6"/>
+  <text class="title" x="750" y="585" text-anchor="middle">Home Assistant</text>
+
+  <!-- Note over deye-bridge -->
+  <rect class="note" x="78" y="78" width="220" height="34" rx="4"/>
+  <text class="note-text" x="188" y="99" text-anchor="middle">Every DEYE_DATA_READ_INTERVAL (30s)</text>
+
+  <!-- 1 DB -> LG -->
+  <text class="num" x="24" y="142">1</text>
+  <line class="arrow-solid" x1="140" y1="138" x2="340" y2="138"/>
+  <text class="msg" x="240" y="130" text-anchor="middle">UDP 48899 · WIFIKIT-214028-READ</text>
+  <rect class="side-note" x="8" y="148" width="108" height="28" rx="4"/>
+  <text class="side-text" x="62" y="166" text-anchor="middle">Send discovery probe</text>
+  <rect class="side-note" x="352" y="148" width="118" height="28" rx="4"/>
+  <text class="side-text" x="411" y="166" text-anchor="middle">WiFi module awake</text>
+
+  <!-- 2 LG --> DB -->
+  <text class="num" x="24" y="212">2</text>
+  <line class="arrow-dashed" x1="340" y1="208" x2="140" y2="208"/>
+  <text class="msg" x="240" y="200" text-anchor="middle">IP, MAC, serial</text>
+  <rect class="side-note" x="8" y="218" width="108" height="28" rx="4"/>
+  <text class="side-text" x="62" y="236" text-anchor="middle">Parse logger identity</text>
+  <rect class="side-note" x="352" y="218" width="118" height="28" rx="4"/>
+  <text class="side-text" x="411" y="236" text-anchor="middle">Responds on LAN</text>
+
+  <!-- 3 DB -> LG -->
+  <text class="num" x="24" y="282">3</text>
+  <line class="arrow-solid" x1="140" y1="278" x2="340" y2="278"/>
+  <text class="msg" x="240" y="270" text-anchor="middle">AT+INVDATA · Modbus read</text>
+  <rect class="side-note" x="8" y="288" width="108" height="40" rx="4"/>
+  <text class="side-text" x="62" y="304" text-anchor="middle">Request PV / AC /</text>
+  <text class="side-text" x="62" y="318" text-anchor="middle">energy registers</text>
+  <rect class="side-note" x="352" y="288" width="118" height="28" rx="4"/>
+  <text class="side-text" x="411" y="306" text-anchor="middle">Forward to inverter</text>
+
+  <!-- 4 LG --> DB -->
+  <text class="num" x="24" y="352">4</text>
+  <line class="arrow-dashed" x1="340" y1="348" x2="140" y2="348"/>
+  <text class="msg" x="240" y="340" text-anchor="middle">Modbus payload</text>
+  <rect class="side-note" x="8" y="358" width="108" height="28" rx="4"/>
+  <text class="side-text" x="62" y="376" text-anchor="middle">Decode metrics</text>
+
+  <!-- 5 DB -> MQ -->
+  <text class="num" x="24" y="412">5</text>
+  <line class="arrow-solid" x1="140" y1="408" x2="540" y2="408"/>
+  <text class="msg" x="340" y="400" text-anchor="middle">PUBLISH metrics + logger_status = online</text>
+
+  <!-- 6 MQ --> HA -->
+  <text class="num" x="24" y="462">6</text>
+  <line class="arrow-dashed" x1="540" y1="458" x2="750" y2="458"/>
+  <text class="msg" x="645" y="450" text-anchor="middle">Sensor updates</text>
+</svg>

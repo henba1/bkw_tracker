@@ -216,71 +216,15 @@ Set `LOGGER_RESILIENCE_DAYLIGHT_ONLY=true` in `stack.env` (default) to **skip re
 
 ### Normal read cycle
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant DB as deye-bridge
-    participant LG as Logger
-    participant MQ as Mosquitto
-    participant HA as Home Assistant
-
-    Note over DB: Every DEYE_DATA_READ_INTERVAL (30s)
-
-    DB->>LG: UDP 48899 · WIFIKIT-214028-READ
-    Note left of DB: Send discovery probe
-    Note right of LG: WiFi module awake
-
-    LG-->>DB: IP, MAC, serial
-    Note left of DB: Parse logger identity
-    Note right of LG: Responds on LAN
-
-    DB->>LG: AT+INVDATA · Modbus read
-    Note left of DB: Request PV / AC / energy registers
-    Note right of LG: Forward to inverter
-
-    LG-->>DB: Modbus payload
-    Note left of DB: Decode metrics
-
-    DB->>MQ: PUBLISH metrics + logger_status = online
-    MQ-->>HA: Sensor updates
-```
+<p align="center">
+  <img src="assets/read-cycle.svg" alt="Normal read cycle: deye-bridge polls the logger on LAN every 30s and publishes metrics to Mosquitto for Home Assistant" width="720">
+</p>
 
 ### Failed read with resilience recovery
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant DB as deye-bridge
-    participant LG as Logger
-    participant MQ as Mosquitto
-    participant LR as logger-resilience
-    participant HA as Home Assistant
-
-    DB->>LG: UDP WIFIKIT + AT+INVDATA
-    LG--xDB: Timeouts (module busy / asleep / WiFi flap)
-
-    DB->>MQ: PUBLISH logger_status = offline
-    Note right of HA: Sensors → unavailable
-
-    MQ-->>LR: logger_status = offline
-    Note right of LR: Skip if quiet hours (00:00–04:45)<br/>else check 90s cooldown
-
-    loop Up to LOGGER_WAKEUP_ATTEMPTS (8s apart)
-        LR->>LG: UDP 48899 · WIFIKIT probe
-    end
-
-    alt Probe succeeds
-        LG-->>LR: IP, MAC, serial
-        LR->>DB: docker restart deye-bridge
-        DB->>LG: Full read cycle
-        LG-->>DB: Modbus payload
-        DB->>MQ: metrics + logger_status = online
-        MQ-->>HA: Sensors recover
-    else All probes fail
-        LR->>MQ: PUBLISH _meta/resilience (JSON)
-        Note over DB: Next scheduled read in 30s
-    end
-```
+<p align="center">
+  <img src="assets/recovery-cycle.svg" alt="Failed read with resilience recovery: logger-resilience probes the logger and restarts deye-bridge on success" width="720">
+</p>
 
 ### Resilience settings (`stack.env`)
 
