@@ -217,13 +217,13 @@ Set `LOGGER_RESILIENCE_DAYLIGHT_ONLY=true` in `stack.env` (default) to **skip re
 ### Normal read cycle
 
 <p align="center">
-  <img src="assets/read-cycle.svg" alt="Normal read cycle: deye-bridge polls the logger on LAN every 30s and publishes metrics to Mosquitto for Home Assistant" width="720">
+  <img src="assets/read-cycle.png" alt="Normal read cycle: deye-bridge polls the logger on LAN every 30s and publishes metrics to Mosquitto for Home Assistant" width="720">
 </p>
 
 ### Failed read with resilience recovery
 
 <p align="center">
-  <img src="assets/recovery-cycle.svg" alt="Failed read with resilience recovery: logger-resilience probes the logger and restarts deye-bridge on success" width="720">
+  <img src="assets/recovery-cycle.png" alt="Failed read with resilience recovery: logger-resilience probes the logger and restarts deye-bridge on success" width="720">
 </p>
 
 ### Resilience settings (`stack.env`)

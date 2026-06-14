@@ -32,7 +32,7 @@ jobs:
           tail -n +1 README.md >> pages/index.md
           # GitHub project pages live under /bkw_tracker/ — fix asset URLs for HTML <img> tags
           sed -i 's|src="assets/|src="/bkw_tracker/assets/|g' pages/index.md
-          for asset in image.png architecture.svg read-cycle.svg recovery-cycle.svg; do
+          for asset in image.png architecture.svg read-cycle.png recovery-cycle.png; do
             if [ -f "assets/${asset}" ]; then
               cp "assets/${asset}" "pages/assets/${asset}"
             fi
