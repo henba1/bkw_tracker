@@ -78,6 +78,8 @@ Authenticated **Mosquitto** broker. Acquisition is pluggable: bundled bridge or 
 - Interactive `./setup.sh` wizard (`stack.env` IaC)
 - `./scripts/stack.sh` — render configs, up/down, verify broker & metrics
 - Optional **watchdog cron** — restarts acquisition if MQTT goes silent during daylight
+- **Logger resilience** — spaced LAN wakeup probes when `logger_status=offline` (skipped 00:00–04:45 local by default)
+- `./scripts/stack.sh probe` — manual LAN reachability check
 - Docker `restart: unless-stopped` on broker and optional adapter
 
 ### Optional diagnostics (git clone / dev)
@@ -191,10 +193,105 @@ Sidebar **Solar** dashboard: live power, daily energy, history graphs, **Export 
 | Service status | `./scripts/stack.sh ps` |
 | Live MQTT traffic | `./scripts/stack.sh verify-broker` |
 | Check metrics | `./scripts/stack.sh verify-metrics` |
+| Logger LAN probe | `./scripts/stack.sh probe` |
+| Resilience logs | `./scripts/stack.sh logs logger-resilience` |
 | Install / update HA | `./scripts/install_ha_package.sh --restart` |
 | Watchdog cron (optional) | `./scripts/install_healthcheck_cron.sh` |
 
 Manual config: copy `stack.env.example` → `stack.env`, then `./scripts/stack.sh init`.
+
+---
+
+## Communication and fault resistance
+
+The bundled **deye-bridge** polls the inverter logger on your LAN (UDP **48899** + AT/Modbus) every **`DEYE_DATA_READ_INTERVAL`** seconds (default **30 s**) and publishes metrics to Mosquitto. **logger-resilience** watches `logger_status` and attempts recovery when reads fail.
+
+| Component | Role |
+|---|---|
+| **deye-bridge** | Scheduled LAN read → MQTT publish |
+| **logger-resilience** | Reacts to `logger_status=offline` with spaced UDP wakeup probes; restarts the bridge on success |
+| **healthcheck cron** | Daylight-only watchdog; probes LAN before restarting a silent bridge |
+
+Set `LOGGER_RESILIENCE_DAYLIGHT_ONLY=true` in `stack.env` (default) to **skip recovery between 00:00 and 04:45 local time** — when there is no PV and the logger is normally asleep. The bridge still polls on its interval; only recovery traffic is suppressed.
+
+### Normal read cycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant DB as deye-bridge
+    participant LG as Logger
+    participant MQ as Mosquitto
+    participant HA as Home Assistant
+
+    Note over DB: Every DEYE_DATA_READ_INTERVAL (30s)
+
+    DB->>LG: UDP 48899 · WIFIKIT-214028-READ
+    Note left of DB: Send discovery probe
+    Note right of LG: WiFi module awake
+
+    LG-->>DB: IP, MAC, serial
+    Note left of DB: Parse logger identity
+    Note right of LG: Responds on LAN
+
+    DB->>LG: AT+INVDATA · Modbus read
+    Note left of DB: Request PV / AC / energy registers
+    Note right of LG: Forward to inverter
+
+    LG-->>DB: Modbus payload
+    Note left of DB: Decode metrics
+
+    DB->>MQ: PUBLISH metrics + logger_status = online
+    MQ-->>HA: Sensor updates
+```
+
+### Failed read with resilience recovery
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant DB as deye-bridge
+    participant LG as Logger
+    participant MQ as Mosquitto
+    participant LR as logger-resilience
+    participant HA as Home Assistant
+
+    DB->>LG: UDP WIFIKIT + AT+INVDATA
+    LG--xDB: Timeouts (module busy / asleep / WiFi flap)
+
+    DB->>MQ: PUBLISH logger_status = offline
+    Note right of HA: Sensors → unavailable
+
+    MQ-->>LR: logger_status = offline
+    Note right of LR: Skip if quiet hours (00:00–04:45)<br/>else check 90s cooldown
+
+    loop Up to LOGGER_WAKEUP_ATTEMPTS (8s apart)
+        LR->>LG: UDP 48899 · WIFIKIT probe
+    end
+
+    alt Probe succeeds
+        LG-->>LR: IP, MAC, serial
+        LR->>DB: docker restart deye-bridge
+        DB->>LG: Full read cycle
+        LG-->>DB: Modbus payload
+        DB->>MQ: metrics + logger_status = online
+        MQ-->>HA: Sensors recover
+    else All probes fail
+        LR->>MQ: PUBLISH _meta/resilience (JSON)
+        Note over DB: Next scheduled read in 30s
+    end
+```
+
+### Resilience settings (`stack.env`)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `LOGGER_RESILIENCE_ENABLED` | `true` | Start `logger-resilience` with `./scripts/stack.sh up` |
+| `LOGGER_RESILIENCE_DAYLIGHT_ONLY` | `true` | Skip recovery 00:00–04:45 local |
+| `LOGGER_WAKEUP_ATTEMPTS` | `5` | Spaced UDP probes per recovery |
+| `LOGGER_WAKEUP_INTERVAL_SEC` | `8` | Pause between probes |
+| `LOGGER_RECOVERY_COOLDOWN_SEC` | `90` | Minimum gap between recovery bursts |
+| `LOGGER_RECOVERY_RESTART` | `true` | Restart deye-bridge after successful probe |
 
 ---
 

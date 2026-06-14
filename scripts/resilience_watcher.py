@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from resilience_lib.logger_probe import format_report, logger_reachable, run_probe, wakeup_logger
+from resilience_lib.quiet_hours import in_quiet_hours, quiet_hours_label
 from resilience_lib.stack_env import load_stack_env
 
 LOG = logging.getLogger("resilience_watcher")
@@ -184,6 +185,11 @@ def main() -> int:
             consecutive_offline += 1
             LOG.info("logger_status=offline (%s/%s)", consecutive_offline, offline_threshold)
             if consecutive_offline < offline_threshold:
+                continue
+
+            if in_quiet_hours():
+                LOG.info("Skipping recovery — quiet hours (%s)", quiet_hours_label())
+                consecutive_offline = 0
                 continue
 
             now = time.time()
