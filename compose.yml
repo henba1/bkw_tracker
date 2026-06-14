@@ -24,12 +24,15 @@ services:
   # Spaced LAN wakeup probes when deye-bridge publishes logger_status=offline.
   logger-resilience:
     profiles: ["resilience"]
-    build: ./logger-resilience
+    build:
+      context: .
+      dockerfile: logger-resilience/Dockerfile
     container_name: logger-resilience
     restart: unless-stopped
     network_mode: host
     env_file: ./stack.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker:ro
     depends_on:
       - mosquitto
