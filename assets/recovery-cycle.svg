@@ -76,12 +76,12 @@
   <rect class="side-note" x="692" y="150" width="130" height="28" rx="4"/>
   <text class="side-text" x="757" y="168" text-anchor="middle">Sensors unavailable</text>
 
-  <!-- 4 MQ --> LR -->
+  <!-- 4 MQ to LR -->
   <text class="num" x="8" y="208">4</text>
   <line class="arrow-dashed" x1="355" y1="204" x2="510" y2="204"/>
   <text class="msg" x="432" y="196" text-anchor="middle">logger_status = offline</text>
   <rect class="side-note" x="528" y="190" width="170" height="40" rx="4"/>
-  <text class="side-text" x="613" y="206" text-anchor="middle">Skip if quiet hours (00:0004:45)</text>
+  <text class="side-text" x="613" y="206" text-anchor="middle">Skip if quiet hours (00:00-04:45)</text>
   <text class="side-text" x="613" y="220" text-anchor="middle">else check 90s cooldown</text>
 
   <!-- loop frame -->
@@ -89,7 +89,7 @@
   <text class="frame-label" x="178" y="262">loop Up to LOGGER_WAKEUP_ATTEMPTS (8s apart)</text>
   <text class="num" x="8" y="292">5</text>
   <line class="arrow-solid" x1="510" y1="288" x2="220" y2="288"/>
-  <text class="msg" x="365" y="280" text-anchor="middle">UDP 48899 · WIFIKIT probe</text>
+  <text class="msg" x="365" y="280" text-anchor="middle">UDP 48899 - WIFIKIT probe</text>
 
   <!-- alt frame -->
   <rect class="frame" x="12" y="340" width="896" height="500" rx="8"/>

@@ -54,13 +54,13 @@
   <!-- 1 DB -> LG -->
   <text class="num" x="24" y="142">1</text>
   <line class="arrow-solid" x1="140" y1="138" x2="340" y2="138"/>
-  <text class="msg" x="240" y="130" text-anchor="middle">UDP 48899 · WIFIKIT-214028-READ</text>
+  <text class="msg" x="240" y="130" text-anchor="middle">UDP 48899 - WIFIKIT-214028-READ</text>
   <rect class="side-note" x="8" y="148" width="108" height="28" rx="4"/>
   <text class="side-text" x="62" y="166" text-anchor="middle">Send discovery probe</text>
   <rect class="side-note" x="352" y="148" width="118" height="28" rx="4"/>
   <text class="side-text" x="411" y="166" text-anchor="middle">WiFi module awake</text>
 
-  <!-- 2 LG --> DB -->
+  <!-- 2 LG to DB -->
   <text class="num" x="24" y="212">2</text>
   <line class="arrow-dashed" x1="340" y1="208" x2="140" y2="208"/>
   <text class="msg" x="240" y="200" text-anchor="middle">IP, MAC, serial</text>
@@ -72,14 +72,14 @@
   <!-- 3 DB -> LG -->
   <text class="num" x="24" y="282">3</text>
   <line class="arrow-solid" x1="140" y1="278" x2="340" y2="278"/>
-  <text class="msg" x="240" y="270" text-anchor="middle">AT+INVDATA · Modbus read</text>
+  <text class="msg" x="240" y="270" text-anchor="middle">AT+INVDATA - Modbus read</text>
   <rect class="side-note" x="8" y="288" width="108" height="40" rx="4"/>
   <text class="side-text" x="62" y="304" text-anchor="middle">Request PV / AC /</text>
   <text class="side-text" x="62" y="318" text-anchor="middle">energy registers</text>
   <rect class="side-note" x="352" y="288" width="118" height="28" rx="4"/>
   <text class="side-text" x="411" y="306" text-anchor="middle">Forward to inverter</text>
 
-  <!-- 4 LG --> DB -->
+  <!-- 4 LG to DB -->
   <text class="num" x="24" y="352">4</text>
   <line class="arrow-dashed" x1="340" y1="348" x2="140" y2="348"/>
   <text class="msg" x="240" y="340" text-anchor="middle">Modbus payload</text>
@@ -91,7 +91,7 @@
   <line class="arrow-solid" x1="140" y1="408" x2="540" y2="408"/>
   <text class="msg" x="340" y="400" text-anchor="middle">PUBLISH metrics + logger_status = online</text>
 
-  <!-- 6 MQ --> HA -->
+  <!-- 6 MQ to HA -->
   <text class="num" x="24" y="462">6</text>
   <line class="arrow-dashed" x1="540" y1="458" x2="750" y2="458"/>
   <text class="msg" x="645" y="450" text-anchor="middle">Sensor updates</text>
