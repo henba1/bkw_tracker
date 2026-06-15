@@ -26,4 +26,4 @@ def in_quiet_hours() -> bool:
 
 
 def quiet_hours_label() -> str:
-    return f"{QUIET_HOURS_START.strftime('%H:%M')}–{QUIET_HOURS_END.strftime('%H:%M')} local"
+    return f"{QUIET_HOURS_START.strftime('%H:%M')}-{QUIET_HOURS_END.strftime('%H:%M')} local"

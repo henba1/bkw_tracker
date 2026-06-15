@@ -21,13 +21,34 @@ dev = [
 
 [tool.ruff]
 line-length = 120
+target-version = "py311"
+src = ["scripts", "homeassistant/scripts"]
+exclude = ["pysolarmanv5"]
 
 [tool.ruff.lint]
 select = [
-    "E",
-    "F",
-    "UP",
-    "B",
-    "SIM",
-    "I",
+    "E",   # pycodestyle errors (includes E501 line length)
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "RUF", # Ruff-specific
+    "PTH", # flake8-use-pathlib
+    "C4",  # flake8-comprehensions
+    "PIE", # flake8-pie
+    "RET", # flake8-return
+    "TC",  # flake8-type-checking (typing-only imports)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**/*.py" = ["T201"]  # print is fine in CLI/ops scripts
+"homeassistant/scripts/**/*.py" = ["T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["resilience_lib"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
