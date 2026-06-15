@@ -87,7 +87,11 @@ def udp_wifi_discovery(ip: str, timeout: float) -> ProbeResult:
     return ProbeResult("udp/48899 discovery", False, "no reply to WIFIKIT or HF-A11 probes")
 
 
-def run_probe(ip: str, tcp_ports: tuple[int, ...] = DEFAULT_TCP_PORTS, timeout: float = DEFAULT_TIMEOUT) -> list[ProbeResult]:
+def run_probe(
+    ip: str,
+    tcp_ports: tuple[int, ...] = DEFAULT_TCP_PORTS,
+    timeout: float = DEFAULT_TIMEOUT,
+) -> list[ProbeResult]:
     results = [ping_host(ip, timeout)]
     results.append(udp_wifi_discovery(ip, timeout))
     results.extend(tcp_connect(ip, port, timeout) for port in tcp_ports)

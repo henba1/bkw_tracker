@@ -33,7 +33,7 @@ def resolve_ha_config() -> Path:
             "inspect",
             HA_CONTAINER,
             "--format",
-            "{{range .Mounts}}{{if eq .Destination \"/config\"}}{{.Source}}{{end}}{{end}}",
+            '{{range .Mounts}}{{if eq .Destination "/config"}}{{.Source}}{{end}}{{end}}',
         ],
         check=True,
         capture_output=True,

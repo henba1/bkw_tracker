@@ -32,7 +32,12 @@ def main() -> int:
         help="Logger serial (or set LOGGER_SERIAL)",
     )
     parser.add_argument("--port", type=int, default=int(os.environ.get("LOGGER_PORT", "8899")))
-    parser.add_argument("--register", type=lambda x: int(x, 0), default=0x3C, help="Holding register (0x3C = day energy)")
+    parser.add_argument(
+        "--register",
+        type=lambda x: int(x, 0),
+        default=0x3C,
+        help="Holding register (0x3C = day energy)",
+    )
     args = parser.parse_args()
 
     if not args.ip or args.serial is None:

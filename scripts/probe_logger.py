@@ -12,7 +12,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from resilience_lib.logger_probe import DEFAULT_TCP_PORTS, DEFAULT_TIMEOUT, format_report, logger_reachable, run_probe, wakeup_logger
+from resilience_lib.logger_probe import (
+    DEFAULT_TCP_PORTS,
+    DEFAULT_TIMEOUT,
+    format_report,
+    logger_reachable,
+    run_probe,
+    wakeup_logger,
+)
 from resilience_lib.stack_env import load_stack_env
 
 
