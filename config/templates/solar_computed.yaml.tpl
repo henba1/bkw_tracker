@@ -22,6 +22,20 @@ input_number:
 
 template:
   - sensor:
+      - name: "Solar AC Power (display)"
+        unique_id: ${INVERTER_ID}_ac_power_display
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        icon: mdi:solar-power
+        state: >
+          {% set raw = states('sensor.${HA_ENTITY_SLUG}_solar_ac_power') %}
+          {% if raw not in ['unknown', 'unavailable', 'none', ''] %}
+            {{ raw }}
+          {% else %}
+            {{ this.state }}
+          {% endif %}
+
       - name: "Solar Today Energy (computed)"
         unique_id: ${INVERTER_ID}_day_energy_computed
         unit_of_measurement: kWh

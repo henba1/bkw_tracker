@@ -22,6 +22,20 @@ input_number:
 
 template:
   - sensor:
+      - name: "Solar AC Power (display)"
+        unique_id: sun300g3_ac_power_display
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        icon: mdi:solar-power
+        state: >
+          {% set raw = states('sensor.deye_sun300g3_eu_230_solar_ac_power') %}
+          {% if raw not in ['unknown', 'unavailable', 'none', ''] %}
+            {{ raw }}
+          {% else %}
+            {{ this.state }}
+          {% endif %}
+
       - name: "Solar Today Energy (computed)"
         unique_id: sun300g3_day_energy_computed
         unit_of_measurement: kWh

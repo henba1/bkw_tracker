@@ -16,7 +16,7 @@ views:
           - max
 
       - type: gauge
-        entity: sensor.${HA_ENTITY_SLUG}_solar_ac_power
+        entity: sensor.solar_ac_power_display
         name: AC Output
         min: 0
         max: 300
@@ -54,7 +54,7 @@ views:
         hours_to_show: 48
         refresh_interval: 60
         entities:
-          - entity: sensor.${HA_ENTITY_SLUG}_solar_ac_power
+          - entity: sensor.solar_ac_power_display
             name: AC Power (W)
 
       - type: statistics-graph
