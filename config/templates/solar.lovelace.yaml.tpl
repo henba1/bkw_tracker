@@ -45,8 +45,8 @@ views:
         title: Energy
         entities:
           - entity: sensor.solar_today_energy_computed
-            name: Today (computed)
-          - entity: sensor.${HA_ENTITY_SLUG}_solar_total_energy
+            name: Today
+          - entity: sensor.solar_total_energy_display
             name: Lifetime
 
       - type: history-graph

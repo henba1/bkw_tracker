@@ -20,6 +20,24 @@ input_number:
     initial: 0
     unit_of_measurement: kWh
 
+  solar_today_energy_last_known:
+    name: Solar today energy (last known)
+    min: 0
+    max: 99
+    step: 0.001
+    mode: box
+    initial: 0
+    unit_of_measurement: kWh
+
+  solar_total_energy_last_known:
+    name: Solar lifetime energy (last known)
+    min: 0
+    max: 999999
+    step: 0.001
+    mode: box
+    initial: 0
+    unit_of_measurement: kWh
+
 template:
   - sensor:
       - name: "Solar AC Power (display)"
@@ -42,16 +60,27 @@ template:
         device_class: energy
         state_class: total
         icon: mdi:solar-power
-        availability: >
-          {{ states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') not in
-             ['unknown', 'unavailable', 'none', ''] }}
         state: >
           {% set total = states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') | float(none) %}
           {% set base = states('input_number.solar_baseline_total_kwh') | float(0) %}
           {% if total is none %}
-            none
+            {{ states('input_number.solar_today_energy_last_known') | float(0) }}
           {% else %}
             {{ [0, total - base] | max | round(3) }}
+          {% endif %}
+
+      - name: "Solar Total Energy (display)"
+        unique_id: ${INVERTER_ID}_total_energy_display
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        icon: mdi:sigma
+        state: >
+          {% set raw = states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') %}
+          {% if raw not in ['unknown', 'unavailable', 'none', ''] %}
+            {{ raw | float | round(3) }}
+          {% else %}
+            {{ states('input_number.solar_total_energy_last_known') | float(0) }}
           {% endif %}
 
 automation:
@@ -73,6 +102,43 @@ automation:
           entity_id: input_number.solar_baseline_total_kwh
         data:
           value: "{{ states('sensor.solar_baseline_capture') | float(0) }}"
+
+  - id: solar_persist_today_energy
+    alias: Solar — persist last known today energy
+    description: Keep last computed today value in input_number so it survives HA restarts.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.solar_today_energy_computed
+    condition:
+      - condition: template
+        value_template: >
+          {{ states('sensor.${HA_ENTITY_SLUG}_solar_total_energy') not in
+             ['unknown', 'unavailable', 'none', ''] }}
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.solar_today_energy_last_known
+        data:
+          value: "{{ states('sensor.solar_today_energy_computed') | float(0) }}"
+
+  - id: solar_persist_total_energy
+    alias: Solar — persist last known lifetime energy
+    description: Keep last known lifetime total in input_number so it survives HA restarts.
+    mode: single
+    trigger:
+      - platform: state
+        entity_id: sensor.${HA_ENTITY_SLUG}_solar_total_energy
+    condition:
+      - condition: template
+        value_template: >
+          {{ trigger.to_state.state not in ['unknown', 'unavailable', 'none', ''] }}
+    action:
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.solar_total_energy_last_known
+        data:
+          value: "{{ trigger.to_state.state | float(0) }}"
 
   - id: solar_baseline_init_after_start
     alias: Solar — init baseline after restart (mid-day install)
