@@ -42,16 +42,27 @@ template:
         device_class: energy
         state_class: total
         icon: mdi:solar-power
-        availability: >
-          {{ states('sensor.deye_sun300g3_eu_230_solar_total_energy') not in
-             ['unknown', 'unavailable', 'none', ''] }}
         state: >
           {% set total = states('sensor.deye_sun300g3_eu_230_solar_total_energy') | float(none) %}
           {% set base = states('input_number.solar_baseline_total_kwh') | float(0) %}
           {% if total is none %}
-            none
+            {{ this.state }}
           {% else %}
             {{ [0, total - base] | max | round(3) }}
+          {% endif %}
+
+      - name: "Solar Total Energy (display)"
+        unique_id: sun300g3_total_energy_display
+        unit_of_measurement: kWh
+        device_class: energy
+        state_class: total_increasing
+        icon: mdi:sigma
+        state: >
+          {% set raw = states('sensor.deye_sun300g3_eu_230_solar_total_energy') %}
+          {% if raw not in ['unknown', 'unavailable', 'none', ''] %}
+            {{ raw }}
+          {% else %}
+            {{ this.state }}
           {% endif %}
 
 automation:
