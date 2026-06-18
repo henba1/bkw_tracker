@@ -16,6 +16,7 @@ pysolarmanv5 = { path = "pysolarmanv5" }
 
 [dependency-groups]
 dev = [
+    "pytest>=9.1.0",
     "ruff>=0.9",
 ]
 
